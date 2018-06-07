@@ -1,0 +1,27 @@
+logging:
+  config: classpath:logback/logback.xml
+  
+spring:
+  datasource:
+#   driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+#   url: jdbc:log4jdbc:sqlserver://localhost;instanceName=SQLEXPRESS;databaseName=Tunnel
+#   username: sa
+#   password: vcxzaq1
+#   dbcp2:
+#      test-on-borrow: true
+#      validation-query: SELECT 1
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:log4jdbc:sqlserver://localhost;instanceName=SQLEXPRESS;databaseName=Tunnel
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    username: sa
+    password: vcxzaq1
+    hikari:
+#      connection-timeout: 60000
+      maximum-pool-size: 5
+      connection-test-query: SELECT 1
+#      idle-timeout: 10000
+      minimum-idle: 1
+      pool-name: temsDatasourcePool
+  devtools:
+    livereload:
+      enable: true

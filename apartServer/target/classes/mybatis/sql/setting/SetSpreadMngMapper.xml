@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tems.opr.setting.dao.SetSpreadMngMapper">
+
+	<!-- 상황전파 정보 조회 -->
+	<select id="selectSpreadList" resultType="hashMap">
+		
+		SELECT *
+		FROM (SELECT ROW_NUMBER() OVER(ORDER BY CHANGE_DATE DESC) AS SEQ, A.*
+		FROM(
+				SELECT EC.EVENT_NAME, SM.SMS_MENUAL, SM.CHANGE_DATE, SM.REMARKS, SM.INDEX_NUM
+        FROM SMS_MNG SM, EVENT_CATEG EC
+				WHERE SM.EVENT_ID=EC.EVENT_ID AND SM.TUNNEL_ID = #{tunnelId}
+		) A) B
+
+		<if test="endIndex != null and endIndex != ''">
+		WHERE SEQ <![CDATA[<]]> #{endIndex}
+		AND SEQ >= #{startIndex}
+		</if>
+	</select>
+	
+	<!-- 상황전파 리스트 개수 조회 -->
+	<select id="selectSpreadCount" resultType="Integer">
+		SELECT COUNT(*) AS CNT FROM SMS_MNG
+		  WHERE TUNNEL_ID = #{tunnelId}
+	</select>
+	
+	<!-- 상황전파 상세 조회 -->
+	<select id="selectSpreadView" resultType="hashMap">
+		 SELECT SM.EVENT_ID, SMS_MENUAL,CONVERT(VARCHAR(20), CHANGE_DATE, 120) AS CHANGE_DATE, REMARKS, EC.EVENT_NAME 
+		 FROM SMS_MNG SM, EVENT_CATEG EC
+		  WHERE SM.EVENT_ID=EC.EVENT_ID
+		  AND INDEX_NUM = #{indexNum}
+	</select>
+	
+	<!-- 상황전파 등록 -->
+	<update id="insertSpread">
+	 INSERT INTO SMS_MNG (EVENT_ID, SMS_MENUAL, REMARKS,TUNNEL_ID)
+		  VALUES
+		  (
+			  #{EVENT_ID}, #{SMS_MENUAL}, #{REMARKS}, #{TUNNEL_ID}
+		  )
+	</update>
+	
+	<!-- 상황전파 수정 -->
+	<update id="updateSpread">
+		UPDATE SMS_MNG
+		   SET CHANGE_DATE = getdate(),
+		   			 EVENT_ID = #{EVENT_ID},
+       		   SMS_MENUAL = #{SMS_MENUAL},
+       		   REMARKS = #{REMARKS}
+         WHERE INDEX_NUM = #{INDEX_NUM}
+	</update>
+	
+	<!-- 상황전파 삭제 -->
+	<update id="deleteSpread">
+		DELETE FROM SMS_MNG WHERE INDEX_NUM = #{INDEX_NUM}
+	</update>
+	
+</mapper>
+

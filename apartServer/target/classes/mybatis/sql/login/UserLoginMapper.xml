@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tems.login.dao.UserLoginMapper">
+
+	<select id="selectUserInfo" resultType="hashmap">
+		SELECT USER_ID, 
+		       USER_PWD, 
+		       USER_NAME, 
+		       AUTH_ID 
+		FROM   USER_INFO
+		WHERE  USER_ID = #{id} 
+		   AND USER_USE = 'Y' 	
+	</select>
+	
+	<update id="updateLoginUser">
+		UPDATE USER_INFO
+		SET USER_INPUTDATE = GETDATE()
+		WHERE USER_ID = #{userNo}
+	</update>
+	
+</mapper>
+

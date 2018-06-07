@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tems.opr.setting.dao.SetTunnelMngMapper">
+
+	<!-- 터널정보 정보 조회 -->
+	<select id="selectTunnelList" parameterType="map" resultType="hashMap">
+		
+		SELECT *
+		FROM (SELECT ROW_NUMBER() OVER(ORDER BY TUNNEL_ID) AS SEQ, A.*
+		FROM(
+				SELECT *
+				FROM TUNNEL
+				WHERE  TUNNEL_USE='Y'
+		) A) B
+
+		<if test="endIndex != null and endIndex != ''">
+		WHERE SEQ <![CDATA[<]]> #{endIndex}
+		AND SEQ >= #{startIndex}
+		</if>
+	</select>
+	
+	<!-- 터널정보 리스트 개수 조회 -->
+	<select id="selectTunnelCount" resultType="Integer">
+		SELECT COUNT(*) AS CNT FROM TUNNEL
+		  WHERE TUNNEL_USE='Y'
+	</select>
+	
+	<!-- 터널정보 상세 조회 -->
+	<select id="selectTunnelView" parameterType="map" resultType="hashMap">
+		 SELECT TUNNEL_ID,TUNNEL_NAME,TUNNEL_LINE,TUNNEL_LENGTH,TUNNEL_UP,TUNNEL_DOWN,POS_START,POS_END FROM TUNNEL
+		 WHERE TUNNEL_USE = 'Y'
+		 <if test="search_tunnel_id !=null and search_tunnel_id != '' ">
+			 AND TUNNEL_ID = #{search_tunnel_id}
+		 </if>
+	</select>
+	
+	<!-- 터널정보 등록 -->
+	<update id="insertTunnel" parameterType="map">
+	 INSERT INTO TUNNEL (TUNNEL_ID, TUNNEL_NAME, TUNNEL_LINE, TUNNEL_LENGTH, TUNNEL_UP, TUNNEL_DOWN, TUNNEL_INFO)
+		  VALUES
+		  (
+			  (SELECT TOP 1 'T'+REPLICATE('0', 4 - LEN(RIGHT(TUNNEL_ID,4)+1)) +  CAST(RIGHT(TUNNEL_ID,4)+1 AS CHAR(4)) FROM TUNNEL ORDER BY TUNNEL_ID DESC),
+			   #{tunnelName}, #{tunnelLine}, #{tunnelLength}, #{tunnelUp}, #{tunnelDown}, #{tunnelInfo}
+		  )
+	</update>
+	
+	<!-- 터널정보 수정 -->
+	<update id="updateTunnel" parameterType="map">
+		UPDATE TUNNEL
+		   SET TUNNEL_NAME = #{tunnelName},
+       		   TUNNEL_LINE = #{tunnelLine},
+       		   TUNNEL_LENGTH = #{tunnelLength},
+       		   TUNNEL_UP = #{tunnelUp},
+       		   TUNNEL_DOWN = #{tunnelDown},
+       		   TUNNEL_INFO = #{tunnelInfo}
+         WHERE TUNNEL_ID = #{tunnelId}
+	</update>
+	
+	<!-- 터널정보 삭제 -->
+	<update id="deleteTunnel" parameterType="map">
+		UPDATE TUNNEL SET TUNNEL_USE = 'N' 
+         WHERE TUNNEL_ID =  #{tunnelId}
+	</update>
+	
+</mapper>
+

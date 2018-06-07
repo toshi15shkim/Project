@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tems.opr.common.dao.CommonSqlMapper">
+
+	<!-- 공통코드 보기 -->
+	<select id="CommonCodeView" resultType="hashmap">
+		SELECT * FROM CMM_CODE
+		<if test="cdId != null and cdId != ''">
+			<where>
+				CD_ID = #{cdId}
+			</where>
+		</if>
+		ORDER BY DTL_CD_ID
+	</select>
+	
+	<!-- 대응방안관리 : 돌발유형 보기 -->
+	<select id="AccidentGCateGoryList" resultType="hashmap">
+		SELECT * FROM EVENT_CATEG WHERE EVENT_NAME != '기타'
+	</select>
+	
+	<!-- 사건형태 -->
+	<select id="AccidentMCateGoryList" resultType="hashmap">
+		SELECT DTL_CD_ID, DTL_CD_NAME FROM CMM_CODE
+			<if test="AccidentGCate != null and AccidentGCate != ''">
+			    WHERE CD_ID = #{AccidentGCate}
+			</if>
+     ORDER BY DTL_CD_ID             
+	</select>
+	
+	<!-- 시설물 리스트 -->
+	<select id="selectActionsGCateGoryList" resultType="hashmap">
+		SELECT DTL_CD_NAME AS EQUIP_NAME,DTL_CD_ID AS EQUIP_ID FROM CMM_CODE
+             WHERE CD_ID='EQUIP_ID' AND DTL_CD_ID in (SELECT DISTINCT EQUIP_ID FROM EVENT_PROC_CATEG)
+             ORDER BY DTL_CD_NAME
+	</select>
+	
+	<!-- 검색조건 설비명 리스트 조회 -->
+	<select id="selectActionsMCateGoryList" resultType="hashmap">
+		SELECT TAG_NAME AS PROC_TAG_CODE, TAG_DESC AS PROC_TAG_NAME FROM EVENT_PROC_CATEG
+			<if test="ActionsGCate != null and ActionsGCate != ''">
+			    WHERE EQUIP_ID = #{ActionsGCate}
+			</if>
+     ORDER BY TAG_DESC             
+	</select>
+	
+	<!-- 모니터링 타이머 수정 -->
+	<update id="CommonCodeMoniTimerModi">
+		UPDATE CMM_CODE
+		   SET MEMO = #{MEMO}
+         WHERE CD_ID = 'MONITORING_TIME' AND DTL_CD_ID = #{DTL_CD_ID}
+	</update>
+	
+	<!-- 설비그룹명 리스트 -->
+	<select id="selectGCateGoryList" resultType="hashmap">
+		SELECT REPLACE(EQUIP_GRP_ID,' ','') AS EQUIP_GRP_ID,EQUIP_GRP_NAME FROM EQUIP_GROUP 
+             WHERE EQUIP_GRP_USE = 'Y'   
+		<if test="tunnelId != null and tunnelId != ''">
+			AND	TUNNEL_ID = #{tunnelId}
+		</if>
+		ORDER BY CONVERT(int,RIGHT(EQUIP_GRP_ID,3))
+	</select>
+	
+	<!-- 검색조건 설비명 리스트 조회 -->
+	<select id="selectMCateGoryList" resultType="hashmap">		
+		SELECT REPLACE(EQUIP_ID,' ','') AS EQUIP_ID,DTL_CD_NAME
+             FROM EQUIP E INNER JOIN CMM_CODE CC ON E.EQUIP_ID=CC.DTL_CD_ID 
+             WHERE CD_ID='EQUIP_ID' AND EQUIP_USE = 'Y'
+		<if test="tunnelId != null and tunnelId != ''">
+			AND	TUNNEL_ID = #{tunnelId}
+			<if test="GCate != null and GCate != ''">
+			    AND EQUIP_GRP_ID = #{GCate}
+			</if>
+		</if>
+		GROUP BY EQUIP_ID,DTL_CD_NAME
+		ORDER BY CONVERT(int,EQUIP_ID)
+	</select>
+	
+	<!-- 검색조건 설비상세명 리스트 조회 -->
+	<select id="selectSCateGoryList" resultType="hashmap">		
+		SELECT REPLACE(EQUIP_SEQ,' ','') AS EQUIP_SEQ,EQUIP_NAME
+         FROM EQUIP WHERE EQUIP_USE = 'Y'
+    <if test="tunnelId != null and tunnelId != ''">
+			AND	TUNNEL_ID = #{tunnelId}
+			<if test="MCate != null and MCate != ''">
+				AND	EQUIP_ID = #{MCate}
+			</if>
+		</if>		
+		ORDER BY CONVERT(int,EQUIP_SEQ)
+	</select>
+	
+	<!-- 터널명 조회 -->
+	<select id="selectTunnelInfo" resultType="hashMap">	
+		SELECT
+			*
+		FROM
+			dbo.TUNNEL
+		WHERE
+			1 = 1
+		    <if test="tunnelId != null and tunnelId != ''">
+				AND	TUNNEL_ID = #{tunnelId}
+			</if>
+	</select>
+	
+	<!-- 알람발생 수 조회 -->
+	<select id="getAlarmTotal" resultType="Integer">
+		select COUNT(*) as cnt
+		from 	(
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from FRESH_DATA_CUR_D_T1 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from INST_DATA_CUR_D_T1 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from FIRE_DATA_CUR_D_T1 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from ELEC_DATA_CUR_D_T1 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from ENV_DATA_CUR_D_T1 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from MACHINE_DATA_CUR_D_T1 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from FRESH_DATA_CUR_D_T2 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from INST_DATA_CUR_D_T2 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from FIRE_DATA_CUR_D_T2 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from ELEC_DATA_CUR_D_T2 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from ENV_DATA_CUR_D_T2 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          		union all
+		          select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+		          from MACHINE_DATA_CUR_D_T2 a, TAG_MASTER b
+		          where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+		          or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y') 
+				) a
+	</select>
+	
+	<!-- 알람발생 내역 조회 -->
+	<select id="selectAlarmList" resultType="hashmap">
+			select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from FRESH_DATA_CUR_D_T1 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+       	union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from INST_DATA_CUR_D_T1 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from FIRE_DATA_CUR_D_T1 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+			or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from ELEC_DATA_CUR_D_T1 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from ENV_DATA_CUR_D_T1 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from MACHINE_DATA_CUR_D_T1 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from FRESH_DATA_CUR_D_T2 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	   		or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from INST_DATA_CUR_D_T2 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from FIRE_DATA_CUR_D_T2 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from ELEC_DATA_CUR_D_T2 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from ENV_DATA_CUR_D_T2 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+          union all
+	        select TAG_DESC, TUNNEL_ID, EQUIP_GRP_ID
+	        from MACHINE_DATA_CUR_D_T2 a, TAG_MASTER b
+	        where (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '1' and b.ALARM_YN = 'Y' and b.REVERSE_YN is null)
+	        or (a.TAG_NAME = b.TAG_NAME and a.D_VAL = '0' and b.ALARM_YN = 'Y' and b.REVERSE_YN = 'Y')
+	</select>
+</mapper>

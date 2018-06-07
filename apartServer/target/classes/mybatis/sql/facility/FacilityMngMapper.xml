@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tems.opr.facility.dao.FacilityMngMapper">
+
+    <!-- 시설물 정보 조건 -->
+    <sql id="facility_commonSearch">
+        <if test="UpDown != null and UpDown != ''">
+            AND EQUIP_DIRECTION = #{UpDown}
+        </if>
+        <if test="GCate != null and GCate != ''">
+            AND EQUIP_GRP_ID = #{GCate}
+        </if>
+        <if test="MCate != null and MCate != ''">
+            AND EQUIP_ID = #{MCate}
+        </if>
+        <if test="SCate != null and SCate != ''">
+            AND EQUIP_SEQ = #{SCate}
+        </if>
+        <if test="equipPos != null and equipPos != ''">
+            AND EQUIP_POS >= #{equipPos}
+        </if>
+        <if test="equipPos2 != null and equipPos2 != ''">
+            AND EQUIP_POS <![CDATA[<=]]> #{equipPos2}
+        </if>
+        <if test="dlLine != null and dlLine != ''">
+            AND EQUIP_LINE = #{dlLine}
+        </if>
+        <if test="equipChangeDateS != null and equipChangeDateS != ''">
+            AND EQUIP_CHANGEDATE >= #{equipChangeDateS}
+        </if>
+        <if test="equipChangeDateE != null and equipChangeDateE != ''">
+            AND EQUIP_CHANGEDATE <![CDATA[<=]]> #{equipChangeDateE}
+        </if>
+        <if test="equipChageDatePlanS != null and equipChageDatePlanS != ''">
+            AND EQUIP_CHANGEDATEPLAN >= #{equipChageDatePlanS}
+        </if>
+        <if test="equipChageDatePlanE != null and equipChageDatePlanE != ''">
+            AND EQUIP_CHANGEDATEPLAN <![CDATA[<=]]> #{equipChageDatePlanE}
+        </if>
+        <if test="equip_use != null and equip_use != ''">
+            AND EQUIP_USE = #{equip_use}
+        </if>
+    </sql>
+
+    <!-- 시설물 정보 조회 -->
+    <select id="selectFacilityList" resultType="map">
+        SELECT *
+        FROM (SELECT ROW_NUMBER() OVER(ORDER BY EQUIP_ID DESC, CONVERT(int, EQUIP_SEQ)) AS SEQ, A.*
+        FROM(
+        SELECT TUNNEL_ID,EQUIP_GRP_ID,(SELECT DTL_CD_NAME FROM CMM_CODE WHERE CD_ID='EQUIP_GRP_ID' AND DTL_CD_ID =
+        E.EQUIP_GRP_ID) AS EQUIP_GRP_NAME,
+        EQUIP_ID,(SELECT DTL_CD_NAME FROM CMM_CODE WHERE CD_ID='EQUIP_ID' AND DTL_CD_ID = E.EQUIP_ID) AS
+        EQUIP_ID_NAME,EQUIP_SEQ,EQUIP_NUM,EQUIP_NAME,
+        (CASE WHEN (EQUIP_DIRECTION = '1') THEN '상행' WHEN (EQUIP_DIRECTION = '2') THEN '하행' ELSE '' END) AS
+        EQUIP_DIRECTION,
+        EQUIP_LINE,EQUIP_LENGTH,
+        (CASE WHEN (EQUIP_USE = 'Y') THEN '사용' ELSE '미사용' END) AS EQUIP_USE ,EQUIP_POS,
+        CONVERT(VARCHAR(10),EQUIP_CHANGEDATE, 23) AS EQUIP_CHANGEDATE, CONVERT(VARCHAR(10),EQUIP_CHANGEDATEPLAN, 23) AS
+        EQUIP_CHANGEDATEPLAN
+        FROM EQUIP E WHERE TUNNEL_ID = #{tunnelId} AND EQUIP_ID != '99'
+        <include refid="facility_commonSearch"/>
+        ) A) B
+
+        <if test="endIndex != null and endIndex != ''">
+            WHERE SEQ <![CDATA[<]]> #{endIndex}
+            AND SEQ >= #{startIndex}
+        </if>
+    </select>
+
+    <!-- 시설물 리스트 개수 조회 -->
+    <select id="selectFacilityCount" resultType="integer">
+        SELECT COUNT(*) AS CNT FROM EQUIP
+        WHERE TUNNEL_ID = #{tunnelId} AND EQUIP_ID != '99'
+        <include refid="facility_commonSearch"/>
+    </select>
+
+    <!-- 시설물 상세 조회 -->
+    <select id="selectFacilityView" resultType="map">
+		 SELECT TUNNEL_ID,REPLACE(EQUIP_GRP_ID,' ','') AS EQUIP_GRP_ID,REPLACE(EQUIP_ID,' ','') AS EQUIP_ID,REPLACE(EQUIP_SEQ,' ','') AS EQUIP_SEQ,EQUIP_NUM,EQUIP_NAME,EQUIP_DIRECTION,EQUIP_LINE,EQUIP_LENGTH, EQUIP_USE ,EQUIP_POS,
+				 CONVERT(VARCHAR(10),EQUIP_CHANGEDATE, 23) AS EQUIP_CHANGEDATE, CONVERT(VARCHAR(10),EQUIP_CHANGEDATEPLAN, 23) AS EQUIP_CHANGEDATEPLAN, CONVERT(VARCHAR(10),EQUIP_FITDATE, 23) AS EQUIP_FITDATE
+				  FROM EQUIP WHERE EQUIP_NUM = #{equip_num}
+	</select>
+
+
+    <!-- 시설물 수정 -->
+    <update id="updateFacility">
+		UPDATE EQUIP
+		   SET EQUIP_GRP_ID = #{equip_grp_id},
+		   			 EQUIP_ID = #{equip_id},
+       		   EQUIP_SEQ = #{equip_seq},
+       		   EQUIP_DIRECTION = #{equip_direction},
+		   			 EQUIP_LINE = #{equip_line},
+		   			 EQUIP_POS = #{equip_pos},
+       		   EQUIP_FITDATE = #{equip_fitdate},
+       		   EQUIP_CHANGEDATE = #{equip_changedate},
+       		   EQUIP_CHANGEDATEPLAN = #{equip_changedateplan},
+       		   EQUIP_USE = #{equip_use}
+         WHERE EQUIP_NUM = ${equip_num}
+	</update>
+
+    <!-- 시설물 읽기 -->
+    <select id="selectFacilityRead" parameterType="map" resultType="map">
+        SELECT
+        <if test="pop_top != null and pop_top != ''">
+            TOP ${pop_top}
+        </if>
+        TUNNEL_ID,REPLACE(EQUIP_GRP_ID,' ','') AS EQUIP_GRP_ID,REPLACE(EQUIP_ID,' ','') AS EQUIP_ID,REPLACE(EQUIP_SEQ,' ','') AS EQUIP_SEQ,EQUIP_NUM,EQUIP_NAME,EQUIP_DIRECTION,EQUIP_LINE,EQUIP_LENGTH, EQUIP_POS
+        FROM EQUIP WHERE EQUIP_USE = 'Y'
+        <if test="tunnelId != null and tunnelId != ''">
+            AND TUNNEL_ID = #{tunnelId}
+        </if>
+        <if test="equip_id != null and equip_id != ''">
+            AND EQUIP_ID = #{equip_id}
+        </if>
+        <if test="equip_id_in != null and equip_id_in != ''">
+            AND EQUIP_ID in (${equip_id_in})
+        </if>
+        <if test="equip_seq != null and equip_seq != ''">
+            AND EQUIP_SEQ = #{equip_seq}
+        </if>
+        <if test="equip_num != null and equip_num != ''">
+            AND EQUIP_NUM = ${equip_num}
+        </if>
+        <if test="equip_direction != null and equip_direction != ''">
+            AND EQUIP_DIRECTION = #{equip_direction}
+        </if>
+        <if test="equip_pos != null and equip_pos != ''">
+            AND EQUIP_POS ${equip_pos}
+        </if>
+        ORDER BY EQUIP_DIRECTION
+        <if test="equip_line_desc != null and equip_line_desc != ''">
+            ,CONVERT(int, EQUIP_SEQ) ${equip_line_desc}
+        </if>
+        , EQUIP_POS DESC
+    </select>
+
+    <!-- 시설물 읽기 -->
+    <select id="selectFacilityByEquipId" parameterType="map" resultMap="EquipMap">
+        SELECT
+        <if test="pop_top != null and pop_top != ''">
+            TOP ${pop_top}
+        </if>
+        * FROM EQUIP WHERE EQUIP_USE = 'Y'
+        <if test="tunnel_id != null and tunnel_id != ''">
+            AND TUNNEL_ID = #{tunnel_id}
+        </if>
+        <if test="equip_id != null and equip_id != ''">
+            AND EQUIP_ID = #{equip_id}
+        </if>
+        <if test="equip_id_in != null and equip_id_in != ''">
+            AND EQUIP_ID in (${equip_id_in})
+        </if>
+        <if test="equip_seq != null and equip_seq != ''">
+            AND EQUIP_SEQ = #{equip_seq}
+        </if>
+        <if test="equip_num != null and equip_num != ''">
+            AND EQUIP_NUM = ${equip_num}
+        </if>
+        <if test="equip_direction != null and equip_direction != ''">
+            AND EQUIP_DIRECTION = #{equip_direction}
+        </if>
+        <if test="equip_pos != null and equip_pos != ''">
+            AND EQUIP_POS #{equip_pos}
+        </if>
+        ORDER BY EQUIP_DIRECTION
+        <if test="equip_line_desc != null and equip_line_desc != ''">
+            , CONVERT(int, EQUIP_SEQ) ${equip_line_desc}
+        </if>
+        , EQUIP_POS DESC
+    </select>
+
+    <resultMap id="EquipMap" type="facilityDTO">
+        <result property="TUNNEL_ID" column="TUNNEL_ID"/>
+        <result property="EQUIP_GRP_ID" column="EQUIP_GRP_ID"/>
+        <result property="EQUIP_ID" column="EQUIP_ID"/>
+        <result property="EQUIP_SEQ" column="EQUIP_SEQ"/>
+        <result property="EQUIP_NUM" column="EQUIP_NUM"/>
+        <result property="EQUIP_NAME" column="EQUIP_NAME"/>
+        <result property="EQUIP_DIRECTION" column="EQUIP_DIRECTION"/>
+        <result property="EQUIP_LINE" column="EQUIP_LINE"/>
+        <result property="EQUIP_LENGTH" column="EQUIP_LENGTH"/>
+        <result property="EQUIP_USE" column="EQUIP_USE"/>
+        <result property="EQUIP_POS" column="EQUIP_POS"/>
+        <result property="EQUIP_CHANGEDATE" column="EQUIP_CHANGEDATE"/>
+        <result property="EQUIP_CHANGEDATEPLAN" column="EQUIP_CHANGEDATEPLAN"/>
+        <result property="EQUIP_FITDATE" column="EQUIP_FITDATE"/>
+    </resultMap>
+
+
+    <!-- 시설물 상태 보기32-->
+    <select id="selectFacility_AnalValView32" parameterType="hashmap" resultMap="analValView32DTO">
+        <![CDATA[
+      SELECT TOP 1 CAST(CAST(${selectCol1} AS NUMERIC(8,0)) AS VARCHAR) AS COL001, CAST(CAST(${selectCol2} AS NUMERIC(8,0)) AS VARCHAR) AS COL002
+      , CAST(CAST(${selectCol3} AS NUMERIC(8,0)) AS VARCHAR) AS COL003, CAST(CAST(${selectCol4} AS NUMERIC(8,0)) AS VARCHAR) AS COL004
+      , CAST(CAST(${selectCol5} AS NUMERIC(8,0)) AS VARCHAR) AS COL005, CAST(CAST(${selectCol6} AS NUMERIC(8,0)) AS VARCHAR) AS COL006
+      , CAST(CAST(${selectCol7} AS NUMERIC(8,0)) AS VARCHAR) AS COL007, CAST(CAST(${selectCol8} AS NUMERIC(8,0)) AS VARCHAR) AS COL008
+      , CAST(CAST(${selectCol9} AS NUMERIC(8,0)) AS VARCHAR) AS COL009, CAST(CAST(${selectCol10} AS NUMERIC(8,0)) AS VARCHAR) AS COL010
+      , CAST(CAST(${selectCol11} AS NUMERIC(8,0)) AS VARCHAR) AS COL011, CAST(CAST(${selectCol12} AS NUMERIC(8,0)) AS VARCHAR) AS COL012
+      , CAST(CAST(${selectCol13} AS NUMERIC(8,0)) AS VARCHAR) AS COL013, CAST(CAST(${selectCol14} AS NUMERIC(8,0)) AS VARCHAR) AS COL014
+      , CAST(CAST(${selectCol15} AS NUMERIC(8,0)) AS VARCHAR) AS COL015, CAST(CAST(${selectCol16} AS NUMERIC(8,0)) AS VARCHAR) AS COL016
+      , CAST(CAST(${selectCol17} AS NUMERIC(8,0)) AS VARCHAR) AS COL017, CAST(CAST(${selectCol18} AS NUMERIC(8,0)) AS VARCHAR) AS COL018
+      , CAST(CAST(${selectCol19} AS NUMERIC(8,0)) AS VARCHAR) AS COL019, CAST(CAST(${selectCol20} AS NUMERIC(8,0)) AS VARCHAR) AS COL020
+      , CAST(CAST(${selectCol21} AS NUMERIC(8,0)) AS VARCHAR) AS COL021, CAST(CAST(${selectCol22} AS NUMERIC(8,0)) AS VARCHAR) AS COL022
+      , CAST(CAST(${selectCol23} AS NUMERIC(8,0)) AS VARCHAR) AS COL023, CAST(CAST(${selectCol24} AS NUMERIC(8,0)) AS VARCHAR) AS COL024
+      , CAST(CAST(${selectCol25} AS NUMERIC(8,0)) AS VARCHAR) AS COL025, CAST(CAST(${selectCol26} AS NUMERIC(8,0)) AS VARCHAR) AS COL026
+      , CAST(CAST(${selectCol27} AS NUMERIC(8,0)) AS VARCHAR) AS COL027, CAST(CAST(${selectCol28} AS NUMERIC(8,0)) AS VARCHAR) AS COL028
+      , CAST(CAST(${selectCol29} AS NUMERIC(8,0)) AS VARCHAR) AS COL029, CAST(CAST(${selectCol30} AS NUMERIC(8,0)) AS VARCHAR) AS COL030
+      , CAST(CAST(${selectCol31} AS NUMERIC(8,0)) AS VARCHAR) AS COL031, CAST(CAST(${selectCol32} AS NUMERIC(8,0)) AS VARCHAR) AS COL032
+      , LOGTIME FROM ${selectTable} ORDER BY LOGTIME DESC
+      ]]>
+    </select>
+
+    <resultMap id="analValView32DTO" type="facilityDTO">
+        <result property="COL001" column="COL001"/>
+        <result property="COL002" column="COL002"/>
+        <result property="COL003" column="COL003"/>
+        <result property="COL004" column="COL004"/>
+        <result property="COL005" column="COL005"/>
+        <result property="COL006" column="COL006"/>
+        <result property="COL007" column="COL007"/>
+        <result property="COL008" column="COL008"/>
+        <result property="COL009" column="COL009"/>
+        <result property="COL010" column="COL010"/>
+        <result property="COL011" column="COL011"/>
+        <result property="COL012" column="COL012"/>
+        <result property="COL013" column="COL013"/>
+        <result property="COL014" column="COL014"/>
+        <result property="COL015" column="COL015"/>
+        <result property="COL016" column="COL016"/>
+        <result property="COL017" column="COL017"/>
+        <result property="COL018" column="COL018"/>
+        <result property="COL019" column="COL019"/>
+        <result property="COL020" column="COL020"/>
+        <result property="COL021" column="COL021"/>
+        <result property="COL022" column="COL022"/>
+        <result property="COL023" column="COL023"/>
+        <result property="COL024" column="COL024"/>
+        <result property="COL025" column="COL025"/>
+        <result property="COL026" column="COL026"/>
+        <result property="COL027" column="COL027"/>
+        <result property="COL028" column="COL028"/>
+        <result property="COL029" column="COL029"/>
+        <result property="COL030" column="COL030"/>
+        <result property="COL031" column="COL031"/>
+        <result property="COL032" column="COL032"/>
+        <result property="LOGTIME" column="LOGTIME"/>
+    </resultMap>
+
+	<!-- 시설물 태그마스트 현재 D -->
+	<select id="TagMasterList_CUR_D_SEL" resultType="map">
+	  SELECT TM.TAG_NAME, TB_NAME, COL_NAME, TAG_DESC, CATEG, MOD_ADDR, START_ADDR_YN,
+        DATA_TYPE, TUNNEL_ID, EQUIP_GRP_ID, REPLACE(EQUIP_ID,' ','') AS EQUIP_ID,
+        REPLACE(EQUIP_SEQ,' ','') AS EQUIP_SEQ, ALARM_YN, REVERSE_YN, D_VAL
+        FROM TAG_MASTER TM INNER JOIN ${table} CD ON TM.TAG_NAME=CD.TAG_NAME
+          WHERE TUNNEL_ID IS NOT NULL
+          <if test="tunnelId != null and tunnelId != ''">
+          AND TUNNEL_ID = #{tunnelId}
+          </if>
+          <if test="equip_grp_id != null and equip_grp_id != ''">
+          AND EQUIP_GRP_ID = #{equip_grp_id}
+          </if>
+          <if test="equip_id != null and equip_id != ''">
+          AND EQUIP_ID = #{equip_id}
+          </if>
+          <if test="equip_id_in != null and equip_id_in != ''">
+          AND EQUIP_ID in (${equip_id_in})
+          </if>
+          <if test="equip_seq != null and equip_seq != ''">
+          AND EQUIP_SEQ = #{equip_seq}
+          </if>
+          <if test="tag_name != null and tag_name != ''">
+          AND TM.TAG_NAME = #{tag_name}
+          </if>
+          <if test="categ != null and categ != ''">
+          AND CATEG = #{categ}
+          </if>
+          <if test="d_val != null and d_val != ''">
+          AND D_VAL = #{d_val}
+          </if>
+          <if test="NULL_col_name != null and NULL_col_name != ''">
+          AND COL_NAME ${NULL_col_name}
+          </if>
+              ORDER BY EQUIP_SEQ
+    </select>
+    
+    <!-- 시설물 태그마스트 현재 D -->
+	<select id="equipGrpMachine" resultType="map">
+		SELECT * FROM ${table_name} WHERE TAG_NAME LIKE #{tag_name}
+      <if test="d_val != null and d_val != ''">
+      AND D_VAL = #{d_val}
+      </if>
+	</select>
+	
+  <!-- VICO 시설물 Analog -->
+  <select id="VicoAnalValView" resultType="map">
+      SELECT TOP 1 isNULL(CAST(CAST(COL001 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL001, isNULL(CAST(CAST(COL002 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL002
+      , isNULL(CAST(CAST(COL003 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL003, isNULL(CAST(CAST(COL007 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL004
+      , isNULL(CAST(CAST(COL008 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL005, isNULL(CAST(CAST(COL009 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL006
+      , isNULL(CAST(CAST(COL013 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL007, isNULL(CAST(CAST(COL014 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL008
+      , isNULL(CAST(CAST(COL015 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL009, isNULL(CAST(CAST(COL019 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL010
+      , isNULL(CAST(CAST(COL020 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL011, isNULL(CAST(CAST(COL021 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL012      
+      , isNULL(CAST(CAST(COL025 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL013, isNULL(CAST(CAST(COL027 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL014
+      , isNULL(CAST(CAST(COL029 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL015, isNULL(CAST(CAST(COL031 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL016
+       FROM INST_DATA_A_${tc} ORDER BY LOGTIME DESC
+  </select>
+  
+  <!-- 풍향풍속계 시설물 Analog -->
+  <select id="WindAnalValView" resultType="map">
+      SELECT TOP 1 isNULL(CAST(CAST(COL025 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL001, isNULL(CAST(CAST(COL027 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL002
+      , isNULL(CAST(CAST(COL029 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL003, isNULL(CAST(CAST(COL031 AS NUMERIC(8,1)) AS VARCHAR),'') AS COL004
+       FROM INST_DATA_A_${tc}_1H ORDER BY LOGTIME DESC
+  </select>
+  
+  <!-- 변전실, 소화조 시설물 Analog -->
+  <select id="ElbFstoreAnalValView" resultType="map">
+   (SELECT EQUIP_ID, TAG_NAME, D_VAL FROM (SELECT top 1 '32' AS EQUIP_ID, '${tc}_ELB1_KWH' AS TAG_NAME, ISNULL(COL002,0) AS D_VAL FROM ELEC_DATA_A_${tc} ORDER BY LOGTIME DESC) AS C) UNION
+	 (SELECT EQUIP_ID, TAG_NAME, D_VAL FROM (SELECT top 1 '32' AS EQUIP_ID, '${tc}_ELB10_KWH' AS TAG_NAME, ISNULL(COL092,0) AS D_VAL FROM ELEC_DATA_A_${tc} ORDER BY LOGTIME DESC) AS D) UNION
+	 (SELECT EQUIP_ID, TAG_NAME, D_VAL FROM (SELECT top 1 '66' AS EQUIP_ID, 'T1_FSTORE1_VAL' AS TAG_NAME, ISNULL(COL065,0) AS D_VAL FROM MACHINE_DATA_A_T1 ORDER BY LOGTIME DESC) AS E)
+  </select>
+  
+  <!-- 제어 이력 정보 등록 -->
+  <update id="equipCtrl_Regi">
+      <![CDATA[
+      INSERT INTO EQUIP_CTRL (TUNNEL_ID, TAG_NAME, REQ_DATE, DATA_TYPE, MOD_ADDR, EQUIP_VAL)
+      VALUES
+      (#{TUNNEL_ID}, #{TAG_NAME}, GETDATE(), #{DATA_TYPE}, #{MOD_ADDR}, #{EQUIP_VAL} )
+      ]]>
+    </update>
+	
+	
+</mapper>
+
