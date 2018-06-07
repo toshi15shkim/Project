@@ -20,11 +20,11 @@
         <appender-ref ref="STDOUT"/>
     </logger>-->
 
-    <logger name="com.tems.opr.dao.ExLinkMapper" level="DEBUG">
+    <logger name="com.tems.opr.dao.ExLinkMapper" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="com.tems.opr.dao.TrafficMapper" level="DEBUG">
+    <logger name="com.tems.opr.dao.TrafficMapper" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 
