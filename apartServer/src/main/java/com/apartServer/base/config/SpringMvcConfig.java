@@ -18,10 +18,6 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.*;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
-import org.springframework.web.servlet.view.UrlBasedViewResolver;
-import org.springframework.web.servlet.view.tiles3.TilesConfigurer;
-import org.springframework.web.servlet.view.tiles3.TilesView;
-import org.springframework.web.servlet.view.tiles3.TilesViewResolver;
 
 import java.util.Arrays;
 import java.util.List;
@@ -74,12 +70,6 @@ public class SpringMvcConfig extends WebMvcConfigurerAdapter {
         registry.addViewController("/login").setViewName("login");
     }
 
-    @Override
-    public void configureViewResolvers(ViewResolverRegistry registry) {
-        TilesViewResolver viewResolver = new TilesViewResolver();
-        registry.viewResolver(viewResolver);
-    }
-
     /**
      * 인터셉터 추가
      *
@@ -105,22 +95,6 @@ public class SpringMvcConfig extends WebMvcConfigurerAdapter {
         registrationBean.setOrder(1);
         registrationBean.addUrlPatterns("*.do");    //filter를 거칠 url patterns
         return registrationBean;
-    }
-
-    @Bean
-    public TilesConfigurer tilesConfigurer() {
-        final TilesConfigurer configurer = new TilesConfigurer();
-        configurer.setDefinitions(new String[] {"/WEB-INF/tiles/tiles.xml"});
-        configurer.setCheckRefresh(true);
-
-        return configurer;
-    }
-
-    @Bean
-    public UrlBasedViewResolver tilesViewResolver(){
-        UrlBasedViewResolver resolver = new UrlBasedViewResolver();
-        resolver.setViewClass(TilesView.class);
-        return resolver;
     }
 
     /**

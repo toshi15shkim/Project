@@ -8,13 +8,9 @@
         </layout>
     </appender>
 
-    <logger name="com.tems.opr.dao.ExLinkMapper" level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-    <logger name="com.tems.opr.dao.TrafficMapper" level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </logger>
+<!--     <logger name="com.tems.opr.dao.TrafficMapper" level="INFO"> -->
+<!--         <appender-ref ref="STDOUT"/> -->
+<!--     </logger> -->
 
     <logger name="jdbc.sqltiming" level="INFO" additivity="false">
         <appender-ref ref="STDOUT"/>

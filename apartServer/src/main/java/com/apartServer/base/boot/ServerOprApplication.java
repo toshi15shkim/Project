@@ -12,16 +12,16 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import javax.sql.DataSource;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.tems")
-@MapperScan(basePackages="com.tems.**.dao")
+@ComponentScan(basePackages = "com.apartServer")
+@MapperScan(basePackages="com.apartServer.**.dao")
 //@EnableTransactionManagement(mode = AdviceMode.PROXY, proxyTargetClass = true)
 @EnableAutoConfiguration(exclude = {
         org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class})
-public class TemsOprApplication extends SpringBootServletInitializer {
+public class ServerOprApplication extends SpringBootServletInitializer {
 
 
     public static void main(String[] args) {
-        SpringApplication.run(TemsOprApplication.class, args);
+        SpringApplication.run(ServerOprApplication.class, args);
     }
 
     @Bean

@@ -20,6 +20,6 @@
     </settings>
 
     <typeAliases>
-        <package name="com.tems.opr"/>
+        <package name="com.apartServer.api"/>
     </typeAliases>
 </configuration>

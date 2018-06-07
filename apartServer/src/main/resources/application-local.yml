@@ -23,7 +23,7 @@ spring:
      connection-test-query: SELECT 1
      idle-timeout: 10000
      minimum-idle: 1
-     pool-name: temsDatasourcePool
+     pool-name: apartDatasourcePool
   devtools:
     livereload:
       enable: true

@@ -91,29 +91,7 @@ public class SecurityConfig {
         public AuthenticationProvider daoAuthenticationProvider() {
             CertificationProviderService certificationProviderService = new CertificationProviderService();
             certificationProviderService.setUserDetailsService(userCertificationService);
-            // default인 PlaintextPasswordEncoder() 가 아닌 다른 인코더를 구현할때 사용
-//            certificationProviderService.setPasswordEncoder(new TemsPasswordEncoder());
-
             return certificationProviderService;
         }
-
-        /**
-         * 사용자 정의 인코더
-         */
-        private class TemsPasswordEncoder implements PasswordEncoder {
-            @Override
-            public String encode(CharSequence rawPassword) {
-                // sha-2 / sha-3 같은 해시를 처리
-                return rawPassword.toString();
-            }
-
-            @Override
-            public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                // rawPassword 현재 들어온 값 | encodedPassword 매칭되는 계정에 있는 값
-                return encodedPassword.equals(encode(rawPassword));
-            }
-        }
     }
-
-
 }
