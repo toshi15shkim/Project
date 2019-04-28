@@ -14,11 +14,12 @@
   "author": "Toshi",
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.444.0"
+	  "aws-sdk": "^2.444.0",
+	  "express": "~4.13.1",
+	  "express-session": "1.7.2",
+	  "moment": "2.20.1",
+	  "winston": "2.4.0",
+	  "winston-daily-rotate-file": "1.7.2"
   },
-  "devDependencies": {
-    "moment": "2.20.1",
-    "winston": "2.4.0",
-    "winston-daily-rotate-file": "1.7.2"
-  }
+  "devDependencies": {}
 }
