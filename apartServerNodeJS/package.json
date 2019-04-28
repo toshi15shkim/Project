@@ -2,7 +2,7 @@
   "name": "node",
   "version": "1.0.0",
   "description": "apartServer",
-  "main": "hello-world-server.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
   },
@@ -14,7 +14,11 @@
   "author": "Toshi",
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.437.0"
+    "aws-sdk": "^2.444.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "moment": "2.20.1",
+    "winston": "2.4.0",
+    "winston-daily-rotate-file": "1.7.2"
+  }
 }
