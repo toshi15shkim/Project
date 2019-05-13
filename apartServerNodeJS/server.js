@@ -23,6 +23,7 @@ const requireParam = {
 	app : app
 }
 
+var schedule = require('./scheduler/schedule')(requireParam);
 var users = require('./controller/users')(requireParam);
 
 http.listen(8080);
