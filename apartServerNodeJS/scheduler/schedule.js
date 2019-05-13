@@ -1,11 +1,13 @@
 var schedule = require('node-schedule');
+var fs = require('fs');
 var cm = require(__base+'module/common');
 
 module.exports = function(requireParam) {
     var app = requireParam.app;
 
     app.get('/area_new_insert', function(req, res) {
-        cm.logger.info('abcd');
+        var fullAreaCode = fs.readFileSync('./fullAreaCodeInfo.txt').toString().split("\n");
+        cm.logger.debug(fullAreaCode.length);
     });
 }
 
