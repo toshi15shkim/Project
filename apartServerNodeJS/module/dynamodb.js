@@ -5,5 +5,7 @@ AWS.config.update({
 });
 
 var dynamodb = new AWS.DynamoDB();
+var docClient = new AWS.DynamoDB.DocumentClient();
 
-module.exports = dynamodb;
+exports.dynamodb = dynamodb;
+exports.docClient = docClient;

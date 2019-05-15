@@ -11,7 +11,7 @@ var param = {
 		TableName : "users"
 }
 
-cm.db.describeTable(param, function(err, data) {
+cm.db.dynamodb.describeTable(param, function(err, data) {
 	if(err) {
 		console.log("ERR " + err);
 	} else {
