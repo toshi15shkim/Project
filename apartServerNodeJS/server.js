@@ -7,17 +7,17 @@ global.__base = __dirname + '/';
 
 var cm = require(__base+'module/common');
 
-var param = {
-		TableName : "users"
-}
+// var param = {
+// 		TableName : "users"
+// }
 
-cm.db.dynamodb.describeTable(param, function(err, data) {
-	if(err) {
-		console.log("ERR " + err);
-	} else {
-		console.log("Data " + JSON.stringify(data));
-	}
-});
+// cm.db.scan(param, function(err, data) {
+// 	if(err) {
+// 		console.log("ERR " + err);
+// 	} else {
+// 		console.log("Data " + JSON.stringify(data));
+// 	}
+// });
 
 const requireParam = {
 	app : app

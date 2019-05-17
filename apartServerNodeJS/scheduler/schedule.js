@@ -1,4 +1,6 @@
 var schedule = require('node-schedule');
+var request = require('request');
+var xml2js = require('xml2js');
 var fs = require('fs');
 var cm = require(__base+'module/common');
 
@@ -8,7 +10,6 @@ module.exports = function(requireParam) {
     app.get('/area_new_insert', function(req, res) {
         var fullAreaCode = fs.readFileSync(__base+'scheduler/fullAreaCodeInfo.txt').toString().split("\n");
         for(var i = 1; i < fullAreaCode.length; i ++) {
-        // for(var i = 1; i < 1000; i ++) {
             var areaInfoArray = fullAreaCode[i].split("\t");    //탭으로 구분
             var exist_yn = areaInfoArray[areaInfoArray.length-1];
 
@@ -32,15 +33,43 @@ module.exports = function(requireParam) {
                                 "sido_name" : sido_name
                             }
                         }
-                        cm.db.docClient.put(insertParam, function(err, data) {
+                        cm.db.put(insertParam, function(err, data) {
                             if(err) {
-                                cm.logger.error("ERR " + err);
+                                cm.logger.error("area_new_insert ERR " + err);
                             }
                         });
                     }
                 }
             }
         }
+    });
+
+    app.get('/test', function(req, res) {
+        cm.getPortalKey().then(function(portalKey) {
+            var dataParam = {
+                url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
+                qs : {
+                    "pageNo": 1,
+                    "startPage": 1,
+                    "numOfRows": 10,
+                    "pageSize": 10,
+                    "LAWD_CD": 11110,
+                    "DEAL_YMD": 201512
+                }
+            }
+            request(dataParam, function(err, response, body) {
+                var parser = new xml2js.Parser();
+                parser.parseString(body, function(err, result) {
+                    // console.log(JSON.stringify(result));
+                    var bodyData = result.response.body[0].items[0].item;
+                    for(var i = 0; i < bodyData.length; i ++) {
+                        console.log(bodyData[i]['거래금액']);
+                    }
+                    console.log(bodyData.length);
+                    console.log(JSON.stringify(bodyData));
+                });
+            });
+        });
     });
 }
 

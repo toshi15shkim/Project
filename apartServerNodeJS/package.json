@@ -4,7 +4,8 @@
   "description": "apartServer",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
+    "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [
     "node.js",
@@ -14,13 +15,15 @@
   "author": "Toshi",
   "license": "MIT",
   "dependencies": {
-	  "aws-sdk": "^2.444.0",
-	  "express": "~4.13.1",
+    "aws-sdk": "^2.444.0",
+    "express": "~4.13.1",
     "express-session": "1.7.2",
+    "moment": "2.20.1",
     "node-schedule": "1.3.2",
-	  "moment": "2.20.1",
-	  "winston": "2.4.0",
-	  "winston-daily-rotate-file": "1.7.2"
+    "request": "^2.88.0",
+    "winston": "2.4.0",
+    "winston-daily-rotate-file": "1.7.2",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {}
 }
