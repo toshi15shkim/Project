@@ -45,52 +45,31 @@ module.exports = function(requireParam) {
     });
 
     app.get('/test', function(req, res) {
-        cm.getPortalKey().then(function(portalKey) {
-            var dataParam = {
-                url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
-                qs : {
-                    "pageNo": 1,
-                    "startPage": 1,
-                    "numOfRows": 11,
-                    "pageSize": 10,
-                    "LAWD_CD": 11110,
-                    "DEAL_YMD": 201512
-                }
-            }
-            request(dataParam, function(err, response, body) {
-                var parser = new xml2js.Parser();
-                parser.parseString(body, function(err, result) {
-                    // console.log(JSON.stringify(result));
-                    var bodyData = result.response.body[0].items[0].item;
-                    for(var i = 0; i < bodyData.length; i ++) {
-                        tradeDetailRealInsert(bodyData[i], i);
-
-                        // console.log(bodyData[i]['거래금액'][0].replace(/,/gi, "").trim()); --
-                        // console.log(bodyData[i]['건축년도'][0]); --
-                        // console.log(bodyData[i]['년'][0]); --
-                        // console.log(bodyData[i]['도로명'][0]); --
-                        // console.log(bodyData[i]['도로명건물본번호코드'][0]); --
-                        // console.log(bodyData[i]['도로명건물부번호코드'][0]); --
-                        // console.log(bodyData[i]['도로명시군구코드'][0]); --
-                        // console.log(bodyData[i]['도로명일련번호코드'][0]); --
-                        // console.log(bodyData[i]['도로명지상지하코드'][0]); --
-                        // console.log(bodyData[i]['도로명코드'][0]); --
-                        // console.log(bodyData[i]['법정동'][0].trim()); --
-                        // console.log(bodyData[i]['법정동본번코드'][0]); --
-                        // console.log(bodyData[i]['법정동부번코드'][0]); --
-                        // console.log(bodyData[i]['법정동시군구코드'][0]); --
-                        // console.log(bodyData[i]['법정동읍면동코드'][0]); --
-                        // console.log(bodyData[i]['법정동지번코드'][0]); --
-                        // console.log(bodyData[i]['아파트'][0]); --
-                        // console.log(bodyData[i]['월'][0]); --
-                        // console.log(bodyData[i]['일'][0]); --
-                        // console.log(bodyData[i]['일련번호'][0]); --
-                        // console.log(bodyData[i]['전용면적'][0]); --
-                        // console.log(bodyData[i]['지번'][0]); --
-                        // console.log(bodyData[i]['지역코드'][0]); --
-                        // console.log(bodyData[i]['층'][0]); --
+        cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
+            getLastPeriod().then(function(last_date) {  //조회할 마지막 날짜 가져오기
+                var dataParam = {
+                    url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
+                    qs : {
+                        "pageNo": 1,
+                        "startPage": 1,
+                        "numOfRows": 11,
+                        "pageSize": 10,
+                        "LAWD_CD": 11110,
+                        "DEAL_YMD": last_date
                     }
-                    console.log(JSON.stringify(bodyData));
+                }
+                request(dataParam, function(err, response, body) {
+                    var parser = new xml2js.Parser();
+                    parser.parseString(body, function(err, result) {
+                        // console.log(JSON.stringify(result));
+                        var bodyData = result.response.body[0].items[0].item;
+                        console.log(bodyData.length);
+                        for(var i = 0; i < bodyData.length; i ++) {
+                            tradeDetailRealInsert(bodyData[i], i);
+    
+                        }
+                        // console.log(JSON.stringify(bodyData));
+                    });
                 });
             });
         });
@@ -103,6 +82,26 @@ rule.second = new schedule.Range(0, 59, 5);
 var area_update = schedule.scheduleJob(rule, function() {
     // console.log(":aa");
 });
+
+//마지막 조회기간 가져오기
+var getLastPeriod = function() {
+    return new Promise(function(resolve, reject) {
+        var keyParam = {
+            TableName : "key_info",
+            Key : {
+                "type" : "period"
+            }
+        }
+        cm.db.get(keyParam, function(err, data) {
+            if(err) {
+                cm.logger.error("get period ERR " + err);
+                reject();
+            } else {
+                resolve(data.Item.key);
+            }
+        });
+    });
+}
 
 //실거래 원천정보 insert
 var tradeDetailRealInsert = function(bodyData, idx) {
@@ -122,7 +121,7 @@ var tradeDetailRealInsert = function(bodyData, idx) {
             "road_sub_cd" : bodyData['도로명건물부번호코드'][0],
             "road_sgg_cd" : bodyData['도로명시군구코드'][0],
             "road_serial_cd" : bodyData['도로명일련번호코드'][0],
-            "road_updw_cd" : bodyData['도로명지상지하코드'][0],
+            "road_updw_cd" : cm.nullChk(bodyData['도로명지상지하코드'][0]),
             "road_name_cd" : bodyData['도로명코드'][0],
             "law_name" : bodyData['법정동'][0].trim(),
             "law_main_cd" : bodyData['법정동본번코드'][0],
@@ -138,7 +137,7 @@ var tradeDetailRealInsert = function(bodyData, idx) {
     }
     cm.db.put(insertParam, function(err, data) {
         if(err) {
-            cm.logger.error("trade_detail_real ERR " + err);
+            cm.logger.error("insert trade_detail_real ERR " + err);
         }
     });
 }

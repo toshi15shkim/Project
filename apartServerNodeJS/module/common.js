@@ -21,6 +21,14 @@ var getPortalKey = function() {
     });
 }
 
+var nullChk = function(val) {
+    if(val == undefined || val == null) {
+        val = "";
+    }
+    return val;
+}
+
 exports.getPortalKey = getPortalKey;
+exports.nullChk = nullChk;
 exports.logger = logger;
 exports.db = db;
