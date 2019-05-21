@@ -51,7 +51,7 @@ module.exports = function(requireParam) {
                 qs : {
                     "pageNo": 1,
                     "startPage": 1,
-                    "numOfRows": 1,
+                    "numOfRows": 11,
                     "pageSize": 10,
                     "LAWD_CD": 11110,
                     "DEAL_YMD": 201512
@@ -63,30 +63,32 @@ module.exports = function(requireParam) {
                     // console.log(JSON.stringify(result));
                     var bodyData = result.response.body[0].items[0].item;
                     for(var i = 0; i < bodyData.length; i ++) {
-                        console.log(bodyData[i]['거래금액'][0].replace(/,/gi, "").trim());
-                        console.log(bodyData[i]['건축년도'][0]);
-                        console.log(bodyData[i]['년'][0]);
-                        console.log(bodyData[i]['도로명'][0]);
-                        console.log(bodyData[i]['도로명건물본번호코드'][0]);
-                        console.log(bodyData[i]['도로명건물부번호코드'][0]);
-                        console.log(bodyData[i]['도로명시군구코드'][0]);
-                        console.log(bodyData[i]['도로명일련번호코드'][0]);
-                        console.log(bodyData[i]['도로명지상지하코드'][0]);
-                        console.log(bodyData[i]['도로명코드'][0]);
-                        console.log(bodyData[i]['법정동'][0].trim());
-                        console.log(bodyData[i]['법정동본번코드'][0]);
-                        console.log(bodyData[i]['법정동부번코드'][0]);
-                        console.log(bodyData[i]['법정동시군구코드'][0]);
-                        console.log(bodyData[i]['법정동읍면동코드'][0]);
-                        console.log(bodyData[i]['법정동지번코드'][0]);
-                        console.log(bodyData[i]['아파트'][0]);
-                        console.log(bodyData[i]['월'][0]);
-                        console.log(bodyData[i]['일'][0]);
-                        console.log(bodyData[i]['일련번호'][0]);
-                        console.log(bodyData[i]['전용면적'][0]);
-                        console.log(bodyData[i]['지번'][0]);
-                        console.log(bodyData[i]['지역코드'][0]);
-                        console.log(bodyData[i]['층'][0]);
+                        tradeDetailRealInsert(bodyData[i], i);
+
+                        // console.log(bodyData[i]['거래금액'][0].replace(/,/gi, "").trim()); --
+                        // console.log(bodyData[i]['건축년도'][0]); --
+                        // console.log(bodyData[i]['년'][0]); --
+                        // console.log(bodyData[i]['도로명'][0]); --
+                        // console.log(bodyData[i]['도로명건물본번호코드'][0]); --
+                        // console.log(bodyData[i]['도로명건물부번호코드'][0]); --
+                        // console.log(bodyData[i]['도로명시군구코드'][0]); --
+                        // console.log(bodyData[i]['도로명일련번호코드'][0]); --
+                        // console.log(bodyData[i]['도로명지상지하코드'][0]); --
+                        // console.log(bodyData[i]['도로명코드'][0]); --
+                        // console.log(bodyData[i]['법정동'][0].trim()); --
+                        // console.log(bodyData[i]['법정동본번코드'][0]); --
+                        // console.log(bodyData[i]['법정동부번코드'][0]); --
+                        // console.log(bodyData[i]['법정동시군구코드'][0]); --
+                        // console.log(bodyData[i]['법정동읍면동코드'][0]); --
+                        // console.log(bodyData[i]['법정동지번코드'][0]); --
+                        // console.log(bodyData[i]['아파트'][0]); --
+                        // console.log(bodyData[i]['월'][0]); --
+                        // console.log(bodyData[i]['일'][0]); --
+                        // console.log(bodyData[i]['일련번호'][0]); --
+                        // console.log(bodyData[i]['전용면적'][0]); --
+                        // console.log(bodyData[i]['지번'][0]); --
+                        // console.log(bodyData[i]['지역코드'][0]); --
+                        // console.log(bodyData[i]['층'][0]); --
                     }
                     console.log(JSON.stringify(bodyData));
                 });
@@ -101,3 +103,42 @@ rule.second = new schedule.Range(0, 59, 5);
 var area_update = schedule.scheduleJob(rule, function() {
     // console.log(":aa");
 });
+
+//실거래 원천정보 insert
+var tradeDetailRealInsert = function(bodyData, idx) {
+    var insertParam = {
+        TableName : "trade_detail_real",
+        Item: {
+            "area_code" : bodyData['지역코드'][0],
+            "serial" : idx,
+            "apart_serial_no" : bodyData['일련번호'][0],
+            "day" : bodyData['일'][0],
+            "month" : bodyData['월'][0],
+            "year" : bodyData['년'][0],
+            "price" : bodyData['거래금액'][0].replace(/,/gi, "").trim(),
+            "build_year" : bodyData['건축년도'][0],
+            "road_name" : bodyData['도로명'][0],
+            "road_main_cd" : bodyData['도로명건물본번호코드'][0],
+            "road_sub_cd" : bodyData['도로명건물부번호코드'][0],
+            "road_sgg_cd" : bodyData['도로명시군구코드'][0],
+            "road_serial_cd" : bodyData['도로명일련번호코드'][0],
+            "road_updw_cd" : bodyData['도로명지상지하코드'][0],
+            "road_name_cd" : bodyData['도로명코드'][0],
+            "law_name" : bodyData['법정동'][0].trim(),
+            "law_main_cd" : bodyData['법정동본번코드'][0],
+            "law_sub_cd" : bodyData['법정동부번코드'][0],
+            "law_sgg_cd" : bodyData['법정동시군구코드'][0],
+            "law_emd_cd" : bodyData['법정동읍면동코드'][0],
+            "law_jibun_cd" : bodyData['법정동지번코드'][0],
+            "apart_name" : bodyData['아파트'][0],
+            "area_size" : bodyData['전용면적'][0],
+            "jibun" : bodyData['지번'][0],
+            "floor" : bodyData['층'][0],
+        }
+    }
+    cm.db.put(insertParam, function(err, data) {
+        if(err) {
+            cm.logger.error("trade_detail_real ERR " + err);
+        }
+    });
+}
