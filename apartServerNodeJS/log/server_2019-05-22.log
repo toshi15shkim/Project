@@ -1,0 +1,36 @@
+2019-05-22 22:50:39.771 +0900 - debug: Server Start on port 8080
+2019-05-22 22:50:56.683 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: An AttributeValue may not contain an empty string
+2019-05-22 22:52:56.642 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: An AttributeValue may not contain an empty string
+2019-05-22 23:01:33.408 +0900 - debug: Server Start on port 8080
+2019-05-22 23:01:35.771 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:01:35.773 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:01:35.774 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:01:55.324 +0900 - debug: Server Start on port 8080
+2019-05-22 23:01:56.386 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:01:56.390 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:01:56.392 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:03:56.241 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:03:56.244 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:03:56.246 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:07:42.331 +0900 - debug: Server Start on port 8080
+2019-05-22 23:07:43.251 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:07:43.253 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:07:43.255 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:08:39.377 +0900 - debug: Server Start on port 8080
+2019-05-22 23:08:40.670 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:08:40.673 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:08:40.675 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:09:01.883 +0900 - debug: Server Start on port 8080
+2019-05-22 23:09:03.005 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:09:03.007 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:09:03.008 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:18:29.676 +0900 - debug: Server Start on port 8080
+2019-05-22 23:18:31.238 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:18:31.240 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:18:31.241 +0900 - error: insert trade_detail_real ERR ValidationException: One or more parameter values were invalid: Missing the key area_code in the item
+2019-05-22 23:26:38.878 +0900 - debug: Server Start on port 8080
+2019-05-22 23:27:30.361 +0900 - debug: Server Start on port 8080
+2019-05-22 23:30:04.617 +0900 - debug: Server Start on port 8080
+2019-05-22 23:30:18.607 +0900 - debug: Server Start on port 8080
+2019-05-22 23:31:10.184 +0900 - debug: Server Start on port 8080
+2019-05-22 23:32:13.600 +0900 - debug: Server Start on port 8080
