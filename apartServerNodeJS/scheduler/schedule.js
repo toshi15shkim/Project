@@ -46,27 +46,31 @@ module.exports = function(requireParam) {
 
     app.get('/test', function(req, res) {
         cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
-            getLastPeriod().then(function(last_date) {  //조회할 마지막 날짜 가져오기
-                var dataParam = {
-                    url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
-                    qs : {
-                        "pageNo": 1,
-                        "startPage": 1,
-                        "numOfRows": 11,
-                        "pageSize": 10,
-                        "LAWD_CD": 11110,
-                        "DEAL_YMD": last_date
-                    }
-                }
-                request(dataParam, function(err, response, body) {
-                    var parser = new xml2js.Parser();
-                    parser.parseString(body, function(err, result) {
-                        var bodyData = result.response.body[0].items[0].item;
-                        for(var i = 0; i < bodyData.length; i ++) {
-                            tradeDetailRealInsert(bodyData[i], i);
+            getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
+                selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
+                    for(var x = 0; x < area_code.length; x ++) {
+                        var dataParam = {
+                            url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
+                            qs : {
+                                "pageNo": 1,
+                                "startPage": 1,
+                                "numOfRows": 10,
+                                "pageSize": 10,
+                                "LAWD_CD": area_code[x],
+                                "DEAL_YMD": last_date
+                            }
                         }
-                        // console.log(JSON.stringify(bodyData));
-                    });
+                        request(dataParam, function(err, response, body) {
+                            var parser = new xml2js.Parser();
+                            parser.parseString(body, function(err, result) {
+                                var bodyData = result.response.body[0].items[0].item;
+                                for(var i = 0; i < bodyData.length; i ++) {
+                                    tradeDetailRealInsert(bodyData[i], i);
+                                }
+                                // console.log(JSON.stringify(bodyData));
+                            });
+                        });
+                    }
                 });
             });
         });
@@ -80,8 +84,28 @@ var area_update = schedule.scheduleJob(rule, function() {
     // console.log(":aa");
 });
 
-//마지막 조회기간 가져오기
-var getLastPeriod = function() {
+//조회할 지역 가져오기
+var selectAreaList = () => {
+    return new Promise(function(resolve, reject) {
+        var areaParam = {
+            TableName : "area_info",
+        }
+        cm.db.scan(areaParam, function(err, data) {
+            if(err) {
+                cm.logger.error("selectAreaList ERR " + err);
+                reject();
+            } else {
+                var returnData = data.Items.map(function(obj) {
+                    return obj.area_code;
+                }); 
+                resolve(returnData);
+            }
+        });
+    });
+}
+
+//조회할 날짜 가져오기
+var getBasePeriod = function() {
     return new Promise(function(resolve, reject) {
         var keyParam = {
             TableName : "key_info",
