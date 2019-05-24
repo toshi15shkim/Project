@@ -63,11 +63,17 @@ module.exports = function(requireParam) {
                         request(dataParam, function(err, response, body) {
                             var parser = new xml2js.Parser();
                             parser.parseString(body, function(err, result) {
-                                var bodyData = result.response.body[0].items[0].item;
-                                for(var i = 0; i < bodyData.length; i ++) {
-                                    tradeDetailRealInsert(bodyData[i], i);
+                                if(result.response.header[0].resultCode[0] == "99") {
+                                    cm.logger.info("data portal key expired");
+                                } else {
+                                    var bodyData = result.response.body[0].items[0].item;
+                                    for(var i = 0; i < bodyData.length; i ++) {
+                                        setTimeout(function() {
+                                            tradeDetailRealInsert(bodyData[i], i);
+                                        }, i*50);
+                                    }
+                                    // console.log(JSON.stringify(bodyData));
                                 }
-                                // console.log(JSON.stringify(bodyData));
                             });
                         });
                     }
@@ -98,7 +104,9 @@ var selectAreaList = () => {
                 var returnData = data.Items.map(function(obj) {
                     return obj.area_code;
                 }); 
-                resolve(returnData);
+                // resolve(returnData);
+                // 테스트용
+                resolve(['11110']);
             }
         });
     });
@@ -136,6 +144,8 @@ var tradeDetailRealInsert = function(bodyData, idx) {
     cm.db.put(insertParam, function(err, data) {
         if(err) {
             cm.logger.error("insert trade_detail_real ERR " + err);
+        } else {
+            cm.logger.info("insert trade_detail_real success " + data);
         }
     });
 }
