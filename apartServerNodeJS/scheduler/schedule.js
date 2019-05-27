@@ -54,7 +54,7 @@ module.exports = function(requireParam) {
                             qs : {
                                 "pageNo": 1,
                                 "startPage": 1,
-                                "numOfRows": 10,
+                                "numOfRows": 10000,
                                 "pageSize": 10,
                                 "LAWD_CD": area_code[x],
                                 "DEAL_YMD": last_date
@@ -67,12 +67,10 @@ module.exports = function(requireParam) {
                                     cm.logger.info("data portal key expired");
                                 } else {
                                     var bodyData = result.response.body[0].items[0].item;
-                                    for(var i = 0; i < bodyData.length; i ++) {
-                                        setTimeout(function() {
-                                            tradeDetailRealInsert(bodyData[i], i);
-                                        }, i*50);
-                                    }
                                     // console.log(JSON.stringify(bodyData));
+                                    for(var i = 0; i < bodyData.length; i ++) {
+                                        tradeDetailRealInsert(bodyData[i], i);
+                                    }
                                 }
                             });
                         });
@@ -145,7 +143,7 @@ var tradeDetailRealInsert = function(bodyData, idx) {
         if(err) {
             cm.logger.error("insert trade_detail_real ERR " + err);
         } else {
-            cm.logger.info("insert trade_detail_real success " + data);
+            cm.logger.info("insert trade_detail_real success");
         }
     });
 }
