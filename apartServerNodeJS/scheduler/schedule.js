@@ -49,31 +49,13 @@ module.exports = function(requireParam) {
             getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
                 selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
                     for(var x = 0; x < area_code.length; x ++) {
-                        var dataParam = {
-                            url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
-                            qs : {
-                                "pageNo": 1,
-                                "startPage": 1,
-                                "numOfRows": 10000,
-                                "pageSize": 10,
-                                "LAWD_CD": area_code[x],
-                                "DEAL_YMD": last_date
+                        process.nextTick((function(area_code, last_date, portalKey) {
+                            return function() {
+                                insertDataFnc(area_code, last_date, portalKey).then((msg) => {
+                                    cm.logger.info(msg + "/" + area_code + "/" + last_date);
+                                });
                             }
-                        }
-                        request(dataParam, function(err, response, body) {
-                            var parser = new xml2js.Parser();
-                            parser.parseString(body, function(err, result) {
-                                if(result.response.header[0].resultCode[0] == "99") {
-                                    cm.logger.info("data portal key expired");
-                                } else {
-                                    var bodyData = result.response.body[0].items[0].item;
-                                    // console.log(JSON.stringify(bodyData));
-                                    for(var i = 0; i < bodyData.length; i ++) {
-                                        tradeDetailRealInsert(bodyData[i], i);
-                                    }
-                                }
-                            });
-                        });
+                        })(area_code[x], last_date, portalKey));
                     }
                 });
             });
@@ -87,6 +69,46 @@ rule.second = new schedule.Range(0, 59, 5);
 var area_update = schedule.scheduleJob(rule, function() {
     // console.log(":aa");
 });
+
+var insertDataFnc = (area_code, last_date, portalKey) => {
+    return new Promise(function(resolve, reject) {
+        var dataParam = {
+            url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
+            qs : {
+                "pageNo": 1,
+                "startPage": 1,
+                "numOfRows": 10000,
+                "pageSize": 10,
+                "LAWD_CD": area_code,
+                "DEAL_YMD": last_date
+            }
+        }
+        request(dataParam, function(err, response, body) {
+            var parser = new xml2js.Parser();
+            parser.parseString(body, function(err, result) {
+                if(result.response.header[0].resultCode[0] == "99") {
+                    cm.logger.error("data portal key expired");
+                    return reject();
+                } else {
+                    var bodyData = result.response.body[0].items[0].item;
+                    // console.log(JSON.stringify(bodyData));
+                    let cnt = 0;
+                    if(bodyData == undefined) {
+                        return resolve('success');
+                    }
+                    for(var i = 0; i < bodyData.length; i ++) {
+                        tradeDetailRealInsert(bodyData[i], i).then(() => {
+                            ++cnt;
+                            if(bodyData.length == cnt) {
+                                return resolve('success');
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    });
+}
 
 //조회할 지역 가져오기
 var selectAreaList = () => {
@@ -104,7 +126,7 @@ var selectAreaList = () => {
                 }); 
                 // resolve(returnData);
                 // 테스트용
-                resolve(['11110']);
+                resolve(['11110', '11140']);
             }
         });
     });
@@ -132,19 +154,29 @@ var getBasePeriod = function() {
 
 //실거래 원천정보 insert
 var tradeDetailRealInsert = function(bodyData, idx) {
-    var bodyDataItem = new BodyDataItem(bodyData);
-    var paramItem = bodyDataItem.convert()
-    paramItem['serial'] = idx;
-    var insertParam = {
-        TableName : "trade_detail_real",
-        Item : paramItem,
-    }
-    cm.db.put(insertParam, function(err, data) {
-        if(err) {
-            cm.logger.error("insert trade_detail_real ERR " + err);
-        } else {
-            cm.logger.info("insert trade_detail_real success");
+    return new Promise(function(resolve, reject) {
+        try {
+            var bodyDataItem = new BodyDataItem(bodyData);
+            var paramItem = bodyDataItem.convert();
+            paramItem['serial'] = idx;
+            var insertParam = {
+                TableName : "trade_detail_real",
+                Item : paramItem,
+            }
+            cm.db.put(insertParam, function(err, data) {
+                if(err) {
+                    cm.logger.error("insert trade_detail_real ERR " + err);
+                    return reject();
+                } else {
+                    cm.logger.info("insert trade_detail_real success");
+                    return resolve();
+                }
+            });
+        } catch(e) {
+            cm.logger.error("bodyDataItem Error ", e);
+            return reject();
         }
+        
     });
 }
 
@@ -178,10 +210,6 @@ class BodyDataItem extends DataConvert {
             "year" : this.data['년'][0],
             "price" : this.data['거래금액'][0].replace(/,/gi, "").trim(),
             "build_year" : this.data['건축년도'][0],
-            "road_name" : this.data['도로명'][0],
-            "road_sgg_cd" : this.data['도로명시군구코드'][0],
-            "road_serial_cd" : this.data['도로명일련번호코드'][0],
-            "road_name_cd" : this.data['도로명코드'][0],
             "law_name" : this.data['법정동'][0].trim(),
             "law_sgg_cd" : this.data['법정동시군구코드'][0],
             "law_emd_cd" : this.data['법정동읍면동코드'][0],
@@ -191,6 +219,11 @@ class BodyDataItem extends DataConvert {
             "jibun" : this.data['지번'][0],
             "floor" : this.data['층'][0],
         };
+
+        if(super.undefinedChk(this.data['도로명'])) returnData['road_name'] = this.data['도로명'][0];
+        if(super.undefinedChk(this.data['도로명시군구코드'])) returnData['road_sgg_cd'] = this.data['도로명시군구코드'][0];
+        if(super.undefinedChk(this.data['도로명일련번호코드'])) returnData['road_serial_cd'] = this.data['도로명일련번호코드'][0];
+        if(super.undefinedChk(this.data['도로명코드'])) returnData['road_name_cd'] = this.data['도로명코드'][0];
         if(super.undefinedChk(this.data['도로명건물본번호코드'])) returnData['road_main_cd'] = this.data['도로명건물본번호코드'][0];
         if(super.undefinedChk(this.data['도로명건물부번호코드'])) returnData['road_sub_cd'] = this.data['도로명건물부번호코드'][0];
         if(super.undefinedChk(this.data['도로명지상지하코드'])) returnData['road_updw_cd'] = this.data['도로명지상지하코드'][0];
