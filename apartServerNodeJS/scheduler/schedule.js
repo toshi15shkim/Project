@@ -91,11 +91,10 @@ var insertDataFnc = (area_code, last_date, portalKey) => {
                     return reject();
                 } else {
                     var bodyData = result.response.body[0].items[0].item;
-                    // console.log(JSON.stringify(bodyData));
-                    let cnt = 0;
                     if(bodyData == undefined) {
                         return resolve('success');
                     }
+                    let cnt = 0;
                     for(var i = 0; i < bodyData.length; i ++) {
                         tradeDetailRealInsert(bodyData[i], i).then(() => {
                             ++cnt;
@@ -126,7 +125,7 @@ var selectAreaList = () => {
                 }); 
                 // resolve(returnData);
                 // 테스트용
-                resolve(['11110', '11140']);
+                resolve(['11215', '41271']);
             }
         });
     });
@@ -176,7 +175,6 @@ var tradeDetailRealInsert = function(bodyData, idx) {
             cm.logger.error("bodyDataItem Error ", e);
             return reject();
         }
-        
     });
 }
 
