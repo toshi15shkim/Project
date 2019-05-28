@@ -48,18 +48,22 @@ module.exports = function(requireParam) {
         cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
             getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
                 selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
-                    for(var x = 0; x < area_code.length; x ++) {
-                        process.nextTick((function(area_code, last_date, portalKey) {
-                            return function() {
-                                insertDataFnc(area_code, last_date, portalKey).then((msg) => {
-                                    cm.logger.info(msg + "/" + area_code + "/" + last_date);
-                                });
-                            }
-                        })(area_code[x], last_date, portalKey));
-                    }
-                });
-            });
-        });
+                    return Promise.all(area_code.map(function (code) {
+                        insertDataFnc(code, last_date, portalKey).then((msg) => {
+                            cm.logger.info(msg + "/" + code + "/" + last_date);
+                        });
+                    }));
+                    //     process.nextTick((function(area_code, last_date, portalKey) {
+                    //         return function() {
+                    //             insertDataFnc(area_code, last_date, portalKey).then((msg) => {
+                    //                 cm.logger.info(msg + "/" + area_code + "/" + last_date);
+                    //             });
+                    //         }
+                    //     })(area_code[x], last_date, portalKey));
+                    // }
+                }).catch((err) => cm.logger.error("selectAreaList err ", err));
+            }).catch((err) => cm.logger.error("getBasePeriodv err ", err));
+        }).catch((err) => cm.logger.error("getPortalKey err ", err));
     });
 }
 
@@ -86,10 +90,18 @@ var insertDataFnc = (area_code, last_date, portalKey) => {
         request(dataParam, function(err, response, body) {
             var parser = new xml2js.Parser();
             parser.parseString(body, function(err, result) {
+                if(err) {
+                    console.log(JSON.stringify(result));
+                    cm.logger.error('data portal Error ', err); 
+                }
+                if(result == undefined) {
+                    return resolve('success');
+                }
                 if(result.response.header[0].resultCode[0] == "99") {
                     cm.logger.error("data portal key expired");
                     return reject();
                 } else {
+                    // cm.logger.info("data portal search success")
                     var bodyData = result.response.body[0].items[0].item;
                     if(bodyData == undefined) {
                         return resolve('success');
@@ -125,7 +137,7 @@ var selectAreaList = () => {
                 }); 
                 // resolve(returnData);
                 // 테스트용
-                resolve(['11215', '41271']);
+                resolve(['47190']);
             }
         }); 
     });
