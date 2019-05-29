@@ -44,26 +44,9 @@ module.exports = function(requireParam) {
         }
     });
 
-    app.get('/test', function(req, res) {
-        cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
-            getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
-                selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
-                    return Promise.all(area_code.map(function (code) {
-                        insertDataFnc(code, last_date, portalKey).then((msg) => {
-                            cm.logger.info(msg + "/" + code + "/" + last_date);
-                        });
-                    }));
-                    //     process.nextTick((function(area_code, last_date, portalKey) {
-                    //         return function() {
-                    //             insertDataFnc(area_code, last_date, portalKey).then((msg) => {
-                    //                 cm.logger.info(msg + "/" + area_code + "/" + last_date);
-                    //             });
-                    //         }
-                    //     })(area_code[x], last_date, portalKey));
-                    // }
-                }).catch((err) => cm.logger.error("selectAreaList err ", err));
-            }).catch((err) => cm.logger.error("getBasePeriodv err ", err));
-        }).catch((err) => cm.logger.error("getPortalKey err ", err));
+    app.get('/trade_detail_insert', function(req, res) {
+        // trade_detail_insert();
+        nextAreaCodeFnc();
     });
 }
 
@@ -73,6 +56,42 @@ rule.second = new schedule.Range(0, 59, 5);
 var area_update = schedule.scheduleJob(rule, function() {
     // console.log(":aa");
 });
+
+var trade_detail_insert = (area_cd) => {
+    cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
+        getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
+            selectAreaList(area_cd).then(function(area_code) {  //조회할 지역코드 가져오기
+                return Promise.all(area_code.map(function (code) {
+                    insertDataFnc(code, last_date, portalKey).then((msg) => {
+                        cm.logger.info(msg + "/" + code + "/" + last_date);
+                    });
+                }));
+            }).catch((err) => cm.logger.error("selectAreaList err ", err));
+        }).catch((err) => cm.logger.error("getBasePeriodv err ", err));
+    }).catch((err) => cm.logger.error("getPortalKey err ", err));
+}
+
+let nextAreaCode = () => new Promise((resolve) => {
+    var keyParam = {
+        TableName : "key_info",
+        Key : {
+            "type" : "area_code"
+        }
+    }
+    cm.db.get(keyParam, function(err, data) {
+        if(err) {
+            logger.error("get key_info area_code ERR " + err);
+            reject();
+        } else {
+            resolve(data.Item.key);
+        }
+    });
+});
+
+async function nextAreaCodeFnc() {
+    let area_cd = await nextAreaCode();
+    trade_detail_insert(area_cd);
+}
 
 var insertDataFnc = (area_code, last_date, portalKey) => {
     return new Promise(function(resolve, reject) {
@@ -122,10 +141,14 @@ var insertDataFnc = (area_code, last_date, portalKey) => {
 }
 
 //조회할 지역 가져오기
-var selectAreaList = () => {
+var selectAreaList = (area_cd) => {
     return new Promise(function(resolve, reject) {
         var areaParam = {
             TableName : "area_info",
+            FilterExpression: "area_code = :area_code",
+            ExpressionAttributeValues: {
+                ":area_code": area_cd,
+            }
         }
         cm.db.scan(areaParam, function(err, data) {
             if(err) {
@@ -135,9 +158,9 @@ var selectAreaList = () => {
                 var returnData = data.Items.map(function(obj) {
                     return obj.area_code;
                 }); 
-                // resolve(returnData);
+                resolve(returnData);
                 // 테스트용
-                resolve(['47190']);
+                // resolve(['47190']);
             }
         }); 
     });
