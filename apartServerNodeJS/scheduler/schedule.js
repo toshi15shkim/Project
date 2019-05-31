@@ -46,7 +46,6 @@ module.exports = function(requireParam) {
 
     app.get('/trade_detail_insert', function(req, res) {
         trade_detail_insert();
-        // nextAreaCodeFnc();
     });
 }
 
@@ -59,47 +58,15 @@ const area_update = schedule.scheduleJob(rule, function() {
     trade_detail_insert();
 });
 
-// var trade_detail_insert = (area_cd) => {
 var trade_detail_insert = () => {
     cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
         getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
             selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
                 insertDataFnc(0, area_code, last_date, portalKey);
-                // insertDataFnc(0, area_code, last_date, portalKey).then((msg) => {
-                //     cm.logger.info(msg + "/" + area_code + "/" + last_date);
-                // });
-
-                // return Promise.all(area_code.map(function (code) {
-                //     insertDataFnc(code, last_date, portalKey).then((msg) => {
-                //         cm.logger.info(msg + "/" + code + "/" + last_date);
-                //     });
-                // }));
             }).catch((err) => cm.logger.error("selectAreaList err ", err));
         }).catch((err) => cm.logger.error("getBasePeriodv err ", err));
     }).catch((err) => cm.logger.error("getPortalKey err ", err));
 }
-
-// let nextAreaCode = () => new Promise((resolve) => {
-//     var keyParam = {
-//         TableName : "key_info",
-//         Key : {
-//             "type" : "area_code"
-//         }
-//     }
-//     cm.db.get(keyParam, function(err, data) {
-//         if(err) {
-//             logger.error("get key_info area_code ERR " + err);
-//             reject();
-//         } else {
-//             resolve(data.Item.key);
-//         }
-//     });
-// });
-
-// async function nextAreaCodeFnc() {
-//     let area_cd = await nextAreaCode();
-//     trade_detail_insert(area_cd);
-// }
 
 var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
     console.log("insertDataFnc",area_code[a_idx]);
@@ -131,26 +98,12 @@ var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
                 cm.logger.error("data portal key expired");
                 return 'error';
             } else {
-                // cm.logger.info("data portal search success")
                 var bodyData = result.response.body[0].items[0].item;
                 if(bodyData == undefined) {
                     insertDataFnc(++a_idx, area_code, last_date, portalKey);
                 } else {
                     let cnt = 0;
                     tradeDetailRealInsert(0, bodyData, {"a_idx":++a_idx, "area_code":area_code, "last_date":last_date, "portalKey":portalKey});
-                    
-                    // let cnt = 0;
-                    // for(var i = 0; i < bodyData.length; i ++) {
-                    //     tradeDetailRealInsert(bodyData[i], i).then(() => {
-                    //         ++cnt;
-                    //         if(bodyData.length == cnt) {
-                    //             insertDataFnc(a_idx+1, area_code, last_date, portalKey);
-                    //         }
-                    //     }).catch(function(e) {
-                    //         cm.logger.error(e);
-                    //         return 'error';
-                    //     });
-                    // }
                 }
             }
         });
@@ -228,31 +181,6 @@ var tradeDetailRealInsert = function(idx, bodyData, p_obj) {
         return 'error';
     }
 }
-// var tradeDetailRealInsert = function(bodyData, idx) {
-//     return new Promise(function(resolve, reject) {
-//         try {
-//             var bodyDataItem = new BodyDataItem(bodyData);
-//             var paramItem = bodyDataItem.convert();
-//             paramItem['serial'] = idx;
-//             var insertParam = {
-//                 TableName : "trade_detail_real",
-//                 Item : paramItem,
-//             }
-//             cm.db.put(insertParam, function(err, data) {
-//                 if(err) {
-//                     cm.logger.error("insert trade_detail_real ERR " + err);
-//                     return reject();
-//                 } else {
-//                     cm.logger.info("insert trade_detail_real success");
-//                     return resolve();
-//                 }
-//             });
-//         } catch(e) {
-//             cm.logger.error("bodyDataItem Error ", e);
-//             return reject();
-//         }
-//     });
-// }
 
 //데이터 변환 추상 클래스
 class DataConvert {
