@@ -45,110 +45,123 @@ module.exports = function(requireParam) {
     });
 
     app.get('/trade_detail_insert', function(req, res) {
-        // trade_detail_insert();
-        nextAreaCodeFnc();
+        trade_detail_insert();
+        // nextAreaCodeFnc();
     });
 }
 
-var rule = new schedule.RecurrenceRule();
-rule.second = new schedule.Range(0, 59, 5);
+const rule = new schedule.RecurrenceRule();
+rule.dayOfWeek = [0, new schedule.Range(0, 6)];
+rule.hour = 1;
 
-var area_update = schedule.scheduleJob(rule, function() {
-    // console.log(":aa");
+const area_update = schedule.scheduleJob(rule, function() {
+    cm.logger.info("Area_Update Scheduling Start");
+    trade_detail_insert();
 });
 
-var trade_detail_insert = (area_cd) => {
+// var trade_detail_insert = (area_cd) => {
+var trade_detail_insert = () => {
     cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
         getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
-            selectAreaList(area_cd).then(function(area_code) {  //조회할 지역코드 가져오기
-                return Promise.all(area_code.map(function (code) {
-                    insertDataFnc(code, last_date, portalKey).then((msg) => {
-                        cm.logger.info(msg + "/" + code + "/" + last_date);
-                    });
-                }));
+            selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
+                insertDataFnc(0, area_code, last_date, portalKey);
+                // insertDataFnc(0, area_code, last_date, portalKey).then((msg) => {
+                //     cm.logger.info(msg + "/" + area_code + "/" + last_date);
+                // });
+
+                // return Promise.all(area_code.map(function (code) {
+                //     insertDataFnc(code, last_date, portalKey).then((msg) => {
+                //         cm.logger.info(msg + "/" + code + "/" + last_date);
+                //     });
+                // }));
             }).catch((err) => cm.logger.error("selectAreaList err ", err));
         }).catch((err) => cm.logger.error("getBasePeriodv err ", err));
     }).catch((err) => cm.logger.error("getPortalKey err ", err));
 }
 
-let nextAreaCode = () => new Promise((resolve) => {
-    var keyParam = {
-        TableName : "key_info",
-        Key : {
-            "type" : "area_code"
+// let nextAreaCode = () => new Promise((resolve) => {
+//     var keyParam = {
+//         TableName : "key_info",
+//         Key : {
+//             "type" : "area_code"
+//         }
+//     }
+//     cm.db.get(keyParam, function(err, data) {
+//         if(err) {
+//             logger.error("get key_info area_code ERR " + err);
+//             reject();
+//         } else {
+//             resolve(data.Item.key);
+//         }
+//     });
+// });
+
+// async function nextAreaCodeFnc() {
+//     let area_cd = await nextAreaCode();
+//     trade_detail_insert(area_cd);
+// }
+
+var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
+    console.log("insertDataFnc",area_code[a_idx]);
+    if(a_idx == (area_code.length-1)) {
+        return 'success';
+    }
+    var dataParam = {
+        url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
+        qs : {
+            "pageNo": 1,
+            "startPage": 1,
+            "numOfRows": 10000,
+            "pageSize": 10,
+            "LAWD_CD": area_code[a_idx],
+            "DEAL_YMD": last_date
         }
     }
-    cm.db.get(keyParam, function(err, data) {
-        if(err) {
-            logger.error("get key_info area_code ERR " + err);
-            reject();
-        } else {
-            resolve(data.Item.key);
-        }
-    });
-});
-
-async function nextAreaCodeFnc() {
-    let area_cd = await nextAreaCode();
-    trade_detail_insert(area_cd);
-}
-
-var insertDataFnc = (area_code, last_date, portalKey) => {
-    return new Promise(function(resolve, reject) {
-        var dataParam = {
-            url : "http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev?serviceKey="+portalKey,
-            qs : {
-                "pageNo": 1,
-                "startPage": 1,
-                "numOfRows": 10000,
-                "pageSize": 10,
-                "LAWD_CD": area_code,
-                "DEAL_YMD": last_date
+    request(dataParam, function(err, response, body) {
+        var parser = new xml2js.Parser();
+        parser.parseString(body, function(err, result) {
+            if(err) {
+                cm.logger.error('data portal Error ', err); 
+                return 'error';
             }
-        }
-        request(dataParam, function(err, response, body) {
-            var parser = new xml2js.Parser();
-            parser.parseString(body, function(err, result) {
-                if(err) {
-                    console.log(JSON.stringify(result));
-                    cm.logger.error('data portal Error ', err); 
-                }
-                if(result == undefined) {
-                    return resolve('success');
-                }
-                if(result.response.header[0].resultCode[0] == "99") {
-                    cm.logger.error("data portal key expired");
-                    return reject();
+            if(result == undefined) {
+                return 'success';
+            }
+            if(result.response.header[0].resultCode[0] == "99") {
+                cm.logger.error("data portal key expired");
+                return 'error';
+            } else {
+                // cm.logger.info("data portal search success")
+                var bodyData = result.response.body[0].items[0].item;
+                if(bodyData == undefined) {
+                    insertDataFnc(++a_idx, area_code, last_date, portalKey);
                 } else {
-                    // cm.logger.info("data portal search success")
-                    var bodyData = result.response.body[0].items[0].item;
-                    if(bodyData == undefined) {
-                        return resolve('success');
-                    }
                     let cnt = 0;
-                    for(var i = 0; i < bodyData.length; i ++) {
-                        tradeDetailRealInsert(bodyData[i], i).then(() => {
-                            ++cnt;
-                            if(bodyData.length == cnt) {
-                                return resolve('success');
-                            }
-                        });
-                    }
+                    tradeDetailRealInsert(0, bodyData, {"a_idx":++a_idx, "area_code":area_code, "last_date":last_date, "portalKey":portalKey});
+                    
+                    // let cnt = 0;
+                    // for(var i = 0; i < bodyData.length; i ++) {
+                    //     tradeDetailRealInsert(bodyData[i], i).then(() => {
+                    //         ++cnt;
+                    //         if(bodyData.length == cnt) {
+                    //             insertDataFnc(a_idx+1, area_code, last_date, portalKey);
+                    //         }
+                    //     }).catch(function(e) {
+                    //         cm.logger.error(e);
+                    //         return 'error';
+                    //     });
+                    // }
                 }
-            });
+            }
         });
     });
 }
 
 //조회할 지역 가져오기
-var selectAreaList = (area_cd) => {
+var selectAreaList = () => {
     return new Promise(function(resolve, reject) {
         var areaParam = {
-            TableName : "area_info",
-            FilterExpression: "area_code = :area_code",
-            ExpressionAttributeValues: {
-                ":area_code": area_cd,
-            }
+            TableName : "area_info"
         }
         cm.db.scan(areaParam, function(err, data) {
             if(err) {
@@ -157,10 +170,10 @@ var selectAreaList = (area_cd) => {
             } else {
                 var returnData = data.Items.map(function(obj) {
                     return obj.area_code;
-                }); 
+                });
                 resolve(returnData);
                 // 테스트용
-                // resolve(['47190']);
+                // resolve(['4819']);
             }
         }); 
     });
@@ -187,31 +200,59 @@ var getBasePeriod = function() {
 }
 
 //실거래 원천정보 insert
-var tradeDetailRealInsert = function(bodyData, idx) {
-    return new Promise(function(resolve, reject) {
-        try {
-            var bodyDataItem = new BodyDataItem(bodyData);
-            var paramItem = bodyDataItem.convert();
-            paramItem['serial'] = idx;
-            var insertParam = {
-                TableName : "trade_detail_real",
-                Item : paramItem,
-            }
-            cm.db.put(insertParam, function(err, data) {
-                if(err) {
-                    cm.logger.error("insert trade_detail_real ERR " + err);
-                    return reject();
-                } else {
-                    cm.logger.info("insert trade_detail_real success");
-                    return resolve();
-                }
-            });
-        } catch(e) {
-            cm.logger.error("bodyDataItem Error ", e);
-            return reject();
+var tradeDetailRealInsert = function(idx, bodyData, p_obj) {
+    console.log("tradeDetailRealInsert",idx, bodyData[idx]['지역코드'][0]);
+    if(idx == (bodyData.length-1)) {
+        insertDataFnc(p_obj.a_idx, p_obj.area_code, p_obj.last_date, p_obj.portalKey);
+        return 'success';
+    }
+    try {
+        var bodyDataItem = new BodyDataItem(bodyData[idx]);
+        var paramItem = bodyDataItem.convert();
+        paramItem['serial'] = idx;
+        var insertParam = {
+            TableName : "trade_detail_real",
+            Item : paramItem,
         }
-    });
+        cm.db.put(insertParam, function(err, data) {
+            if(err) {
+                cm.logger.error("insert trade_detail_real ERR " + err);
+                return 'error';
+            } else {
+                cm.logger.info("insert trade_detail_real success");
+                tradeDetailRealInsert(++idx, bodyData, p_obj);
+            }
+        });
+    } catch(e) {
+        cm.logger.error("bodyDataItem Error ", e);
+        return 'error';
+    }
 }
+// var tradeDetailRealInsert = function(bodyData, idx) {
+//     return new Promise(function(resolve, reject) {
+//         try {
+//             var bodyDataItem = new BodyDataItem(bodyData);
+//             var paramItem = bodyDataItem.convert();
+//             paramItem['serial'] = idx;
+//             var insertParam = {
+//                 TableName : "trade_detail_real",
+//                 Item : paramItem,
+//             }
+//             cm.db.put(insertParam, function(err, data) {
+//                 if(err) {
+//                     cm.logger.error("insert trade_detail_real ERR " + err);
+//                     return reject();
+//                 } else {
+//                     cm.logger.info("insert trade_detail_real success");
+//                     return resolve();
+//                 }
+//             });
+//         } catch(e) {
+//             cm.logger.error("bodyDataItem Error ", e);
+//             return reject();
+//         }
+//     });
+// }
 
 //데이터 변환 추상 클래스
 class DataConvert {
