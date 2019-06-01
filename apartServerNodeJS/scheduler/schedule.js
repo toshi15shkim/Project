@@ -52,6 +52,7 @@ module.exports = function(requireParam) {
 const rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [0, new schedule.Range(0, 6)];
 rule.hour = 1;
+rule.minute = 10;
 
 const area_update = schedule.scheduleJob(rule, function() {
     cm.logger.info("Area_Update Scheduling Start");
