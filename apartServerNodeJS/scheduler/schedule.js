@@ -49,17 +49,17 @@ module.exports = function(requireParam) {
     });
 }
 
+//매일 새벽 1시 10분에 실행
 const rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [0, new schedule.Range(0, 6)];
 rule.hour = 1;
 rule.minute = 10;
-
 const area_update = schedule.scheduleJob(rule, function() {
-    cm.logger.info("Area_Update Scheduling Start");
     trade_detail_insert();
 });
 
 var trade_detail_insert = () => {
+    cm.logger.info("Area_Update Scheduling Start");
     cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
         getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
             selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
@@ -69,9 +69,30 @@ var trade_detail_insert = () => {
     }).catch((err) => cm.logger.error("getPortalKey err ", err));
 }
 
+//데이터 등록
 var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
     console.log("insertDataFnc",area_code[a_idx]);
-    if(a_idx == (area_code.length-1)) {
+    //해당 월의 모든 지역 데이터를 저장하면 월을 +1 해서 다시 조회한다.
+    if(a_idx == (area_code.length)) {
+        console.log("@@@@@@@@@@@finished@@@@@@@@@@@@@"+last_date);
+        var updateParam = {
+            TableName : "key_info",
+            Key : {
+                "type" : "period"
+            },
+            UpdateExpression: 'set key_data = :key',
+            ExpressionAttributeValues: {
+                ':key' : addData(last_date),
+            }
+        }
+        cm.db.update(updateParam, function(err, data) {
+            if(err) {
+                cm.logger.error("update period ERR " + err);
+            } else {
+                //변경된 날짜로 다시 insert 시작
+                trade_detail_insert();
+            }
+        });
         return 'success';
     }
     var dataParam = {
@@ -127,7 +148,7 @@ var selectAreaList = () => {
                 });
                 resolve(returnData);
                 // 테스트용
-                // resolve(['4819']);
+                //resolve(['11110', '11140']);
             }
         }); 
     });
@@ -147,7 +168,7 @@ var getBasePeriod = function() {
                 cm.logger.error("get period ERR " + err);
                 reject();
             } else {
-                resolve(data.Item.key);
+                resolve(data.Item.key_data);
             }
         });
     });
@@ -235,4 +256,19 @@ class BodyDataItem extends DataConvert {
 
         return returnData;
     }
+}
+
+//마지막 조회 월에서 +1
+const addData = (last_date) => {
+    let year = last_date.substr(0, 4);  //yyyy
+    let month = last_date.substr(4);    //mm
+    ++month;
+    if(month > 12) {
+        ++year;
+        month = "01";
+    } else if(month < 10) {
+        month = "0"+month;
+    }
+    console.log(year+""+month);
+    return year+""+month;
 }

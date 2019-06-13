@@ -15,7 +15,7 @@ var getPortalKey = function() {
                 logger.error("get key ERR " + err);
                 reject();
             } else {
-                resolve(data.Item.key);
+                resolve(data.Item.key_data);
             }
         });
     });
