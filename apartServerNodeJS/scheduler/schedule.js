@@ -2,6 +2,7 @@ var schedule = require('node-schedule');
 var request = require('request');
 var xml2js = require('xml2js');
 var fs = require('fs');
+var sleep = require('system-sleep');
 var cm = require(__base+'module/common');
 
 module.exports = function(requireParam) {
@@ -176,6 +177,7 @@ var getBasePeriod = function() {
 
 //실거래 원천정보 insert
 var tradeDetailRealInsert = function(idx, bodyData, p_obj) {
+    sleep(700); //ProvisionedThroughputExceededException 에러 떄문에 강제 sleep 할당
     console.log("tradeDetailRealInsert",idx, bodyData[idx]['지역코드'][0]);
     if(idx == (bodyData.length-1)) {
         insertDataFnc(p_obj.a_idx, p_obj.area_code, p_obj.last_date, p_obj.portalKey);
