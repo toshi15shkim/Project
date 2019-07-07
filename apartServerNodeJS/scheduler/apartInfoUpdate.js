@@ -12,7 +12,28 @@ const test = schedule.scheduleJob(rule, function() {
 });
 
 const execute = () => {
-    console.log("aaaa");
+    cm.logger.info("Apart Info Update Scheduling Start");
+    allDataSelect.then(function(data) {
+
+    });
+}
+
+//모든 거래내역 조회
+const allDataSelect = () => {
+    return new Promise(function(resolve, reject) {
+        var defaultParam = {
+            TableName : "trade_detail_real"
+        }
+        cm.db.scan(defaultParam, function(err, data) {
+            if(err) {
+                cm.logger.error("apartInfoUpdate execute ERR " + err);
+                reject();
+            } else {
+                console.log(data);
+                resolve(data);
+            }
+        });
+    });
 }
 
 exports.execute = execute;
