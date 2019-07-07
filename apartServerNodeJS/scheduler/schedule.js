@@ -1,9 +1,10 @@
-var schedule = require('node-schedule');
-var request = require('request');
-var xml2js = require('xml2js');
-var fs = require('fs');
-var sleep = require('system-sleep');
-var cm = require(__base+'module/common');
+const schedule = require('node-schedule');
+const request = require('request');
+const xml2js = require('xml2js');
+const fs = require('fs');
+const apartInfoUpdate = require('./apartInfoUpdate');
+const sleep = require('system-sleep');
+const cm = require(__base+'module/common');
 
 module.exports = function(requireParam) {
     var app = requireParam.app;
@@ -45,8 +46,14 @@ module.exports = function(requireParam) {
         }
     });
 
+    //아파트 거래내역 상세 insert
     app.get('/trade_detail_insert', function(req, res) {
         trade_detail_insert();
+    });
+
+    //아파트 그룹화 상세정보 update
+    app.get('/apartInfoUpdate', function(req, res) {
+        apartInfoUpdate.execute();
     });
 }
 
