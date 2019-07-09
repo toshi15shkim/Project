@@ -13,8 +13,8 @@ const test = schedule.scheduleJob(rule, function() {
 
 const execute = () => {
     cm.logger.info("Apart Info Update Scheduling Start");
-    allDataSelect.then(function(data) {
-
+    allDataSelect().then(function(data) {
+        console.log("b");
     });
 }
 
@@ -29,7 +29,7 @@ const allDataSelect = () => {
                 cm.logger.error("apartInfoUpdate execute ERR " + err);
                 reject();
             } else {
-                console.log(data);
+                //console.log(data);
                 resolve(data);
             }
         });

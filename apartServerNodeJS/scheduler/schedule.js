@@ -59,7 +59,8 @@ module.exports = function(requireParam) {
 
 //매일 새벽 1시 10분에 실행
 const rule = new schedule.RecurrenceRule();
-rule.dayOfWeek = [0, new schedule.Range(0, 6)];
+//rule.dayOfWeek = [0, new schedule.Range(0, 6)];
+rule.dayOfWeek = [0, 3];
 rule.hour = 1;
 rule.minute = 10;
 const area_update = schedule.scheduleJob(rule, function() {
