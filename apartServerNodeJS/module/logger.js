@@ -15,15 +15,15 @@ var logger = new (winston.Logger)({
             colorize: false,
             maxsize: 50000000,
             maxFiles: 1000,
-            level: 'debug',
+            level: 'info',
             showLevel: true,
             json: false,
             timestamp: timeStampFormat
         }),
         new (winston.transports.Console)({
-            name: 'debug-console',
+            name: 'info-console',
             colorize: true,
-            level: 'debug',
+            level: 'info',
             showLevel: true,
             json: false,
             timestamp: timeStampFormat

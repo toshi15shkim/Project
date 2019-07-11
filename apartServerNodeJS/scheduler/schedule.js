@@ -80,10 +80,10 @@ var trade_detail_insert = () => {
 
 //데이터 등록
 var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
-    console.log("insertDataFnc",area_code[a_idx]);
+    cm.logger.info("insertDataFnc",area_code[a_idx]);
     //해당 월의 모든 지역 데이터를 저장하면 월을 +1 해서 다시 조회한다.
     if(a_idx == (area_code.length)) {
-        console.log("@@@@@@@@@@@finished@@@@@@@@@@@@@"+last_date);
+        cm.logger.info("@@@@@@@@@@@finished@@@@@@@@@@@@@"+last_date);
         var updateParam = {
             TableName : "key_info",
             Key : {
@@ -279,6 +279,6 @@ const addData = (last_date) => {
     } else if(month < 10) {
         month = "0"+month;
     }
-    console.log(year+""+month);
+    cm.logger.info(year+""+month);
     return year+""+month;
 }
