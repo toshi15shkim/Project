@@ -116,28 +116,30 @@ var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
         }
     }
     request(dataParam, function(err, response, body) {
-        var parser = new xml2js.Parser();
-        parser.parseString(body, function(err, result) {
-            if(err) {
-                cm.logger.error('data portal Error ', err); 
-                return 'error';
-            }
-            if(result == undefined) {
-                return 'success';
-            }
-            if(result.response.header[0].resultCode[0] == "99") {
-                cm.logger.error("data portal key expired");
-                return 'error';
-            } else {
-                var bodyData = result.response.body[0].items[0].item;
-                if(bodyData == undefined) {
-                    insertDataFnc(++a_idx, area_code, last_date, portalKey);
-                } else {
-                    let cnt = 0;
-                    tradeDetailRealInsert(0, bodyData, {"a_idx":++a_idx, "area_code":area_code, "last_date":last_date, "portalKey":portalKey});
+        if(body != undefined) {
+            var parser = new xml2js.Parser();
+            parser.parseString(body, function(err, result) {
+                if(err) {
+                    cm.logger.error('data portal Error ', err); 
+                    return 'error';
                 }
-            }
-        });
+                if(result == undefined) {
+                    return 'success';
+                }
+                if(result.response.header[0].resultCode[0] == "99") {
+                    cm.logger.error("data portal key expired");
+                    return 'error';
+                } else {
+                    var bodyData = result.response.body[0].items[0].item;
+                    if(bodyData == undefined) {
+                        insertDataFnc(++a_idx, area_code, last_date, portalKey);
+                    } else {
+                        let cnt = 0;
+                        tradeDetailRealInsert(0, bodyData, {"a_idx":++a_idx, "area_code":area_code, "last_date":last_date, "portalKey":portalKey});
+                    }
+                }
+            });
+        }
     });
 }
 
