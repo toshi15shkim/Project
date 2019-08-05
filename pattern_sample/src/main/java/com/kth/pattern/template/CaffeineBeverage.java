@@ -2,18 +2,24 @@ package com.kth.pattern.template;
 
 public abstract class CaffeineBeverage {
     final void prepareRecipe() {
-        
+        StringBuffer sb = new StringBuffer();
+        sb.append(boilWater()).append("\r\n");
+        sb.append(brew()).append("\r\n");
+        sb.append(pourInCup()).append("\r\n");
+        sb.append(addCondiments()).append("\r\n");
+
+        System.out.println(sb);
     }
 
-    abstract void brew();
-
-    abstract void addCondiments();
-
-    void boilWater() {
-        System.out.println("물 끓이는 중");
+    String boilWater() {
+        return "물 끓이는 중";
     }
 
-    void pourInCup() {
-        System.out.println("컵에 따르는 중");
+    abstract String brew();   //처리
+
+    String pourInCup() {
+        return "컵에 따르는 중";
     }
+
+    abstract String addCondiments();  //첨가물 추가
 }
