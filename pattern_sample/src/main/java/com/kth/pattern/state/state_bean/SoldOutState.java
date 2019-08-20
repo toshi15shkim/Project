@@ -10,15 +10,15 @@ public class SoldOutState implements State {
     }
 
     public void insertQuarter() {
-
+        System.out.println("알맹이가 모두 소진되었습니다.");
     }
-    public void ejectQuarter() {
-        
+    public void ejectQuarter() {    
+        System.out.println("알맹이가 모두 소진되었습니다.");
     }
     public void turnCrank() {
-        
+        System.out.println("알맹이가 모두 소진되었습니다.");
     }
     public void dispense() {
-        
+        System.out.println("알맹이가 모두 소진되었습니다.");
     }
 }
