@@ -27,19 +27,13 @@ module.exports = function(requireParam) {
                         }
 
                         //지역 insert
-                        var insertParam = {
-                            TableName : "area_info",
-                            Item: {
-                                "area_code" : areaInfoArray[0].substr(0, 5),
-                                "sgg_name" : sgg_name,
-                                "sido_name" : sido_name
-                            }
-                        }
-                        cm.db.put(insertParam, function(err, data) {
+                        cm.conn.query('insert into area_info values(?, ?, ?)', [areaInfoArray[0].substr(0, 5), sgg_name, sido_name], function(err, result) {
                             if(err) {
                                 cm.logger.error("area_new_insert ERR " + err);
+                                break;
                             }
                         });
+                        sleep(30);
                     }
                 }
             }
