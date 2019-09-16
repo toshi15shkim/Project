@@ -60,7 +60,7 @@ module.exports = function(requireParam) {
 //매일 새벽 1시 10분에 실행
 const rule = new schedule.RecurrenceRule();
 //rule.dayOfWeek = [0, new schedule.Range(0, 6)];
-rule.dayOfWeek = [0, 3];
+rule.dayOfWeek = [1];
 rule.hour = 1;
 rule.minute = 10;
 const area_update = schedule.scheduleJob(rule, function() {
@@ -70,6 +70,7 @@ const area_update = schedule.scheduleJob(rule, function() {
 var trade_detail_insert = () => {
     cm.logger.info("Area_Update Scheduling Start");
     cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
+        console.log(portalKey);
         getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
             selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
                 insertDataFnc(0, area_code, last_date, portalKey);
