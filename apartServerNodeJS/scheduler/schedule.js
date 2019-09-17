@@ -27,7 +27,7 @@ module.exports = function(requireParam) {
                         }
 
                         //지역 insert
-                        cm.conn.query('insert into area_info values(?, ?, ?)', [areaInfoArray[0].substr(0, 5), sgg_name, sido_name], function(err, result) {
+                        cm.conn.query('insert into area_info values(?, ?, ?)', [areaInfoArray[0].substr(0, 5), sgg_name, sido_name], function(err) {
                             if(err) {
                                 cm.logger.error("area_new_insert ERR " + err);
                                 break;
@@ -64,7 +64,6 @@ const area_update = schedule.scheduleJob(rule, function() {
 var trade_detail_insert = () => {
     cm.logger.info("Area_Update Scheduling Start");
     cm.getPortalKey().then(function(portalKey) {    //포탈 키 가져오기
-        console.log(portalKey);
         getBasePeriod().then(function(last_date) {  //조회할 날짜 가져오기
             selectAreaList().then(function(area_code) {  //조회할 지역코드 가져오기
                 insertDataFnc(0, area_code, last_date, portalKey);
@@ -79,17 +78,8 @@ var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
     //해당 월의 모든 지역 데이터를 저장하면 월을 +1 해서 다시 조회한다.
     if(a_idx == (area_code.length)) {
         cm.logger.info("@@@@@@@@@@@finished@@@@@@@@@@@@@"+last_date);
-        var updateParam = {
-            TableName : "key_info",
-            Key : {
-                "type" : "period"
-            },
-            UpdateExpression: 'set key_data = :key',
-            ExpressionAttributeValues: {
-                ':key' : addData(last_date),
-            }
-        }
-        cm.db.update(updateParam, function(err, data) {
+        let updateQuery = "update key_info set key_data = ? where key_type = 'period'";
+        cm.conn.query(updateQuery, addDate(last_date), function(err) {
             if(err) {
                 cm.logger.error("update period ERR " + err);
             } else {
@@ -97,6 +87,25 @@ var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
                 trade_detail_insert();
             }
         });
+
+        // var updateParam = {
+        //     TableName : "key_info",
+        //     Key : {
+        //         "type" : "period"
+        //     },
+        //     UpdateExpression: 'set key_data = :key',
+        //     ExpressionAttributeValues: {
+        //         ':key' : addDate(last_date),
+        //     }
+        // }
+        // cm.db.update(updateParam, function(err, data) {
+        //     if(err) {
+        //         cm.logger.error("update period ERR " + err);
+        //     } else {
+        //         //변경된 날짜로 다시 insert 시작
+        //         trade_detail_insert();
+        //     }
+        // });
         return 'success';
     }
     var dataParam = {
@@ -141,70 +150,102 @@ var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
 //조회할 지역 가져오기
 var selectAreaList = () => {
     return new Promise(function(resolve, reject) {
-        var areaParam = {
-            TableName : "area_info"
-        }
-        cm.db.scan(areaParam, function(err, data) {
+        let selectQuery = "select * from area_info";
+        cm.conn.query(selectQuery, function(err, result) {
             if(err) {
                 cm.logger.error("selectAreaList ERR " + err);
                 reject();
             } else {
-                var returnData = data.Items.map(function(obj) {
+                var returnData = result.map(function(obj) {
                     return obj.area_code;
                 });
-                resolve(returnData);
+                // resolve(returnData);
                 // 테스트용
-                //resolve(['11110', '11140']);
+                resolve(['11110', '11140']);
             }
-        }); 
+        });
+        // var areaParam = {
+        //     TableName : "area_info"
+        // }
+        // cm.db.scan(areaParam, function(err, data) {
+        //     if(err) {
+        //         cm.logger.error("selectAreaList ERR " + err);
+        //         reject();
+        //     } else {
+        //         var returnData = data.Items.map(function(obj) {
+        //             return obj.area_code;
+        //         });
+        //         resolve(returnData);
+        //         // 테스트용
+        //         //resolve(['11110', '11140']);
+        //     }
+        // }); 
     });
 }
 
 //조회할 날짜 가져오기
 var getBasePeriod = function() {
     return new Promise(function(resolve, reject) {
-        var keyParam = {
-            TableName : "key_info",
-            Key : {
-                "type" : "period"
-            }
-        }
-        cm.db.get(keyParam, function(err, data) {
+        let selectQuery = "select key_data from key_info where key_type = 'period'";
+        cm.conn.query(selectQuery, function(err, result) {
             if(err) {
                 cm.logger.error("get period ERR " + err);
                 reject();
             } else {
-                resolve(data.Item.key_data);
+                resolve(result[0].key_data);
             }
         });
+        // var keyParam = {
+        //     TableName : "key_info",
+        //     Key : {
+        //         "type" : "period"
+        //     }
+        // }
+        // cm.db.get(keyParam, function(err, data) {
+        //     if(err) {
+        //         cm.logger.error("get period ERR " + err);
+        //         reject();
+        //     } else {
+        //         resolve(data.Item.key_data);
+        //     }
+        // });
     });
 }
 
 //실거래 원천정보 insert
-var tradeDetailRealInsert = function(idx, bodyData, p_obj) {
-    sleep(700); //ProvisionedThroughputExceededException 에러 떄문에 강제 sleep 할당
+const tradeDetailRealInsert = function(idx, bodyData, p_obj) {
+    sleep(30); //ProvisionedThroughputExceededException 에러 떄문에 강제 sleep 할당
     console.log("tradeDetailRealInsert",idx, bodyData[idx]['지역코드'][0]);
     if(idx == (bodyData.length-1)) {
         insertDataFnc(p_obj.a_idx, p_obj.area_code, p_obj.last_date, p_obj.portalKey);
         return 'success';
     }
     try {
-        var bodyDataItem = new BodyDataItem(bodyData[idx]);
-        var paramItem = bodyDataItem.convert();
-        paramItem['serial'] = idx;
-        var insertParam = {
-            TableName : "trade_detail_real",
-            Item : paramItem,
-        }
-        cm.db.put(insertParam, function(err, data) {
-            if(err) {
-                cm.logger.error("insert trade_detail_real ERR " + err);
-                return 'error';
-            } else {
-                cm.logger.info("insert trade_detail_real success");
-                tradeDetailRealInsert(++idx, bodyData, p_obj);
-            }
-        });
+        let bodyDataItem = new BodyDataItem(bodyData[idx]);
+        let paramItem = bodyDataItem.convert();
+        console.log(Object.keys(paramItem));    //insert문으로 변경해야함
+        //insert문으로 변경해야함
+        //insert문으로 변경해야함
+
+        
+
+        // paramItem['serial'] = idx;
+
+        // let insertQuery = "insert into trade_detail_real";
+
+        // let insertParam = {
+        //     TableName : "trade_detail_real",
+        //     Item : paramItem,
+        // }
+        // cm.db.put(insertParam, function(err, data) {
+        //     if(err) {
+        //         cm.logger.error("insert trade_detail_real ERR " + err);
+        //         return 'error';
+        //     } else {
+        //         cm.logger.info("insert trade_detail_real success");
+        //         tradeDetailRealInsert(++idx, bodyData, p_obj);
+        //     }
+        // });
     } catch(e) {
         cm.logger.error("bodyDataItem Error ", e);
         return 'error';
@@ -236,9 +277,9 @@ class BodyDataItem extends DataConvert {
         var returnData = {
             "area_code" : this.data['지역코드'][0],
             "apart_serial_no" : this.data['일련번호'][0],
-            "day" : this.data['일'][0],
-            "month" : this.data['월'][0],
-            "year" : this.data['년'][0],
+            "trade_day" : this.data['일'][0],
+            "trade_month" : this.data['월'][0],
+            "trade_year" : this.data['년'][0],
             "price" : this.data['거래금액'][0].replace(/,/gi, "").trim(),
             "build_year" : this.data['건축년도'][0],
             "law_name" : this.data['법정동'][0].trim(),
@@ -266,7 +307,7 @@ class BodyDataItem extends DataConvert {
 }
 
 //마지막 조회 월에서 +1
-const addData = (last_date) => {
+const addDate = (last_date) => {
     let year = last_date.substr(0, 4);  //yyyy
     let month = last_date.substr(4);    //mm
     ++month;

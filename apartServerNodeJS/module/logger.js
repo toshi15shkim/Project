@@ -9,21 +9,21 @@ function timeStampFormat() {
 var logger = new (winston.Logger)({
     transports: [
         new (winstonDaily)({
-            name: 'info-file',
+            name: 'debug-file',
             filename: __base+'log/server',
             datePattern: '_yyyy-MM-dd.log',
             colorize: false,
             maxsize: 50000000,
             maxFiles: 1000,
-            level: 'info',
+            level: 'debug',
             showLevel: true,
             json: false,
             timestamp: timeStampFormat
         }),
         new (winston.transports.Console)({
-            name: 'info-console',
+            name: 'debug-console',
             colorize: true,
-            level: 'info',
+            level: 'debug',
             showLevel: true,
             json: false,
             timestamp: timeStampFormat
