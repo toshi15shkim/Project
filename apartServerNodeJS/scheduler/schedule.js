@@ -88,24 +88,6 @@ var insertDataFnc = (a_idx, area_code, last_date, portalKey) => {
             }
         });
 
-        // var updateParam = {
-        //     TableName : "key_info",
-        //     Key : {
-        //         "type" : "period"
-        //     },
-        //     UpdateExpression: 'set key_data = :key',
-        //     ExpressionAttributeValues: {
-        //         ':key' : addDate(last_date),
-        //     }
-        // }
-        // cm.db.update(updateParam, function(err, data) {
-        //     if(err) {
-        //         cm.logger.error("update period ERR " + err);
-        //     } else {
-        //         //변경된 날짜로 다시 insert 시작
-        //         trade_detail_insert();
-        //     }
-        // });
         return 'success';
     }
     var dataParam = {
@@ -159,27 +141,11 @@ var selectAreaList = () => {
                 var returnData = result.map(function(obj) {
                     return obj.area_code;
                 });
-                // resolve(returnData);
+                resolve(returnData);
                 // 테스트용
-                resolve(['11110', '11140']);
+                // resolve(['11110']);
             }
         });
-        // var areaParam = {
-        //     TableName : "area_info"
-        // }
-        // cm.db.scan(areaParam, function(err, data) {
-        //     if(err) {
-        //         cm.logger.error("selectAreaList ERR " + err);
-        //         reject();
-        //     } else {
-        //         var returnData = data.Items.map(function(obj) {
-        //             return obj.area_code;
-        //         });
-        //         resolve(returnData);
-        //         // 테스트용
-        //         //resolve(['11110', '11140']);
-        //     }
-        // }); 
     });
 }
 
@@ -195,20 +161,6 @@ var getBasePeriod = function() {
                 resolve(result[0].key_data);
             }
         });
-        // var keyParam = {
-        //     TableName : "key_info",
-        //     Key : {
-        //         "type" : "period"
-        //     }
-        // }
-        // cm.db.get(keyParam, function(err, data) {
-        //     if(err) {
-        //         cm.logger.error("get period ERR " + err);
-        //         reject();
-        //     } else {
-        //         resolve(data.Item.key_data);
-        //     }
-        // });
     });
 }
 
@@ -223,29 +175,25 @@ const tradeDetailRealInsert = function(idx, bodyData, p_obj) {
     try {
         let bodyDataItem = new BodyDataItem(bodyData[idx]);
         let paramItem = bodyDataItem.convert();
-        console.log(Object.keys(paramItem));    //insert문으로 변경해야함
-        //insert문으로 변경해야함
-        //insert문으로 변경해야함
+        paramItem['area_serial'] = idx;  //자동증가 인덱스
 
+        let keyQuery = Object.keys(paramItem).join(); //key 뽑아와서 join으로 이어 붙이기
+        let valueQuery = Object.values(paramItem).join('","'); //value 뽑아와서 join으로 이어 붙이기
+
+        let insertQuery = "insert into trade_detail_real";
+        insertQuery += "(" + keyQuery + ") ";
+        insertQuery += "values(\"" + valueQuery + "\")";
+        console.log(insertQuery);
         
-
-        // paramItem['serial'] = idx;
-
-        // let insertQuery = "insert into trade_detail_real";
-
-        // let insertParam = {
-        //     TableName : "trade_detail_real",
-        //     Item : paramItem,
-        // }
-        // cm.db.put(insertParam, function(err, data) {
-        //     if(err) {
-        //         cm.logger.error("insert trade_detail_real ERR " + err);
-        //         return 'error';
-        //     } else {
-        //         cm.logger.info("insert trade_detail_real success");
-        //         tradeDetailRealInsert(++idx, bodyData, p_obj);
-        //     }
-        // });
+        cm.conn.query(insertQuery, function(err, result) {
+            if(err) {
+                cm.logger.error("insert trade_detail_real ERR " + err);
+                return 'error';
+            } else {
+                cm.logger.info("insert trade_detail_real success");
+                tradeDetailRealInsert(++idx, bodyData, p_obj);
+            }
+        });
     } catch(e) {
         cm.logger.error("bodyDataItem Error ", e);
         return 'error';
@@ -280,6 +228,7 @@ class BodyDataItem extends DataConvert {
             "trade_day" : this.data['일'][0],
             "trade_month" : this.data['월'][0],
             "trade_year" : this.data['년'][0],
+            "trade_floor" : this.data['층'][0],
             "price" : this.data['거래금액'][0].replace(/,/gi, "").trim(),
             "build_year" : this.data['건축년도'][0],
             "law_name" : this.data['법정동'][0].trim(),
@@ -289,7 +238,6 @@ class BodyDataItem extends DataConvert {
             "apart_name" : this.data['아파트'][0],
             "area_size" : this.data['전용면적'][0],
             "jibun" : this.data['지번'][0],
-            "floor" : this.data['층'][0],
         };
 
         if(super.undefinedChk(this.data['도로명'])) returnData['road_name'] = this.data['도로명'][0];
