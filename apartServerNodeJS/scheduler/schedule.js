@@ -30,7 +30,7 @@ module.exports = function(requireParam) {
                         cm.conn.query('insert into area_info values(?, ?, ?)', [areaInfoArray[0].substr(0, 5), sgg_name, sido_name], function(err) {
                             if(err) {
                                 cm.logger.error("area_new_insert ERR " + err);
-                                break;
+                                // break;
                             }
                         });
                         sleep(30);
