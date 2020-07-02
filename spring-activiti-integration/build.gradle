@@ -1,0 +1,27 @@
+buildscript {
+	ext {
+    	springBootVersion = '2.1.8.RELEASE'
+    }
+    
+    repositories {
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+    }
+}
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+
+repositories {
+    mavenCentral()
+}
+sourceCompatibility = 11
+targetCompatibility = 11
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
+    compile("org.activiti:activiti-spring-boot-starter-basic:6.0.0")
+    compile("com.h2database:h2:1.4.199")
+}
